@@ -317,7 +317,7 @@
           <div>
             <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
               <i class="fa-solid fa-people-group text-pubgGold"></i>
-              <span>สถานะสมาชิกในทีมทั้ง 4 คน (แยกโปรไฟล์อิสระ แก้ไขชื่อและแต้มได้ทันที)</span>
+              <span>สถานะสมาชิกในทีมทั้ง 4 คน </span>
             </h2>
             <p class="text-xs text-slate-400">พิมพ์แก้ชื่อ ตำแหน่ง หรือปรับแต้มของการ์ดแต่ละคนได้เลย แล้วกดปุ่ม <strong>บันทึกข้อมูล (Save)</strong> ด้านบน</p>
           </div>
@@ -328,7 +328,7 @@
               type="number"
               min="4200"
               max="9999"
-              value="5850"
+              value="0000"
               oninput="handleGlobalConqChange(this.value)"
               class="w-24 bg-obsidian border border-red-500/50 focus:border-conqRed rounded-lg px-2.5 py-1 font-mono text-sm font-bold text-red-400 text-center outline-none"
             />
@@ -2695,38 +2695,108 @@
   </script>
 
 <script>
-  // ปลดล็อกให้คลิกพิมพ์และลบตัวเลขในช่องกรอกแต้มได้ตามปกติ
-  document.addEventListener('DOMContentLoaded', () => {
-    const numberInputs = document.querySelectorAll('input[type="number"]');
+  // ปลดล็อกให้คลิกพิมพ์และลบตัวเลข/ชื่อได้ทุกช่อง (รองรับการ์ด 4 คนและตารางที่สร้างด้วย JS)
+  (function () {
+    // 1. ดักจังหวะกำลังพิมพ์ (Capture Phase) ไม่ให้หน้าเว็บวาดการ์ดทับหรือเด้งเลข 1000 ระหว่างพิมพ์
+    document.addEventListener('input', function (e) {
+      const el = e.target;
+      if (!el || el.tagName !== 'INPUT') return;
 
-    numberInputs.forEach(input => {
-      // เอาคำสั่ง oninput เดิมที่คอยบังคับเขียนค่า 1000 ทับขณะพิมพ์ออกชั่วคราวระหว่างที่เคอร์เซอร์อยู่ในช่อง
-      const originalOnInput = input.getAttribute('oninput');
-      if (originalOnInput) {
-        input.removeAttribute('oninput');
+      // แถบเลื่อน (Slider) ให้เลื่อนแล้วเปลี่ยนค่าแบบเรียลไทม์ตามปกติ
+      if (el.type === 'range') return;
 
-        // ให้คำนวณผลลัพธ์เมื่อพิมพ์ครบ 4 หลักขึ้นไป โดยไม่รีเซ็ตเคอร์เซอร์
-        input.addEventListener('input', function () {
-          const val = Number(this.value);
-          if (this.value !== '' && val >= 1000) {
-            const slider = document.querySelector('input[type="range"]');
-            if (slider && this.min === '1000') {
-              slider.value = Math.min(Number(slider.max) || 7500, val);
-            }
+      const oninputAttr = el.getAttribute('oninput') || '';
+      if (!oninputAttr) return;
+
+      // กรณีช่องตัวเลขทุกจุด (แต้มในการ์ด 4 คน, แต้มหลัก, เกณฑ์ Top 500, ตาราง 6 โหมด)
+      if (el.type === 'number') {
+        e.stopImmediatePropagation(); // หยุดไม่ให้การ์ดรีเฟรชตัวเองขณะกำลังพิมพ์
+
+        // บันทึกค่าลงระบบทันทีเมื่อพิมพ์ตัวเลขครบตามเกณฑ์ (เผื่อผู้ใช้กดปุ่ม Save ด้านบนทันที)
+        const val = Number(el.value);
+        const minVal = el.min !== '' ? Number(el.min) : 0;
+        const maxVal = el.max !== '' ? Number(el.max) : 99999;
+
+        if (el.value !== '' && !isNaN(val) && val >= minVal && val <= maxVal) {
+          const mPts = oninputAttr.match(/quickUpdatePlayerPts\((\d+)/);
+          if (mPts) {
+            const idx = Number(mPts[1]);
+            appState.players[idx].modes.tpp_squad = Math.floor(val);
+            saveState(false);
+            renderSquadSelectorBar();
+          } else if (oninputAttr.includes('handleActivePlayerPointsInput')) {
+            const p = getActivePlayer();
+            p.modes[p.activeMode] = Math.floor(val);
+            const slider = document.getElementById('currentPointsSlider');
+            if (slider) slider.value = Math.min(8000, Math.floor(val));
+            saveState(false);
+            renderSquadSelectorBar();
+          } else if (oninputAttr.includes('handleGlobalConqChange')) {
+            appState.conqThreshold = Math.floor(val);
+            saveState(false);
           }
-        });
-
-        // บังคับค่าขั้นต่ำ 1000 และอัปเดตหน้าจอทั้งหมดเมื่อพิมพ์เสร็จแล้วกด Enter หรือคลิกออกนอกช่อง
-        input.addEventListener('change', function () {
-          const minVal = Number(this.min) || 1;
-          if (this.value === '' || Number(this.value) < minVal) {
-            this.value = minVal;
-          }
-          eval(originalOnInput);
-        });
+        }
+        return;
       }
-    });
-  });
+
+      // กรณีช่องพิมพ์ชื่อในการ์ดทีม 4 คน (พิมพ์และลบได้อิสระโดยไม่ถูกบังคับใส่ชื่อ PLAYER 1 คั่นจังหวะ)
+      if (oninputAttr.includes('quickUpdatePlayerName')) {
+        e.stopImmediatePropagation();
+        const mName = oninputAttr.match(/quickUpdatePlayerName\((\d+)/);
+        if (mName) {
+          const idx = Number(mName[1]);
+          if (el.value.trim() !== '') {
+            appState.players[idx].ign = el.value.trim();
+            saveState(false);
+            renderSquadSelectorBar();
+          }
+        }
+      }
+    }, true);
+
+    // 2. กดปุ่ม Enter เมื่อพิมพ์เสร็จ เพื่อยืนยันค่าและสั่งคำนวณทันที
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && e.target && e.target.tagName === 'INPUT') {
+        e.target.blur();
+      }
+    }, true);
+
+    // 3. เมื่อพิมพ์เสร็จแล้วคลิกออกนอกช่อง หรือกด Enter (change) ค่อยคำนวณและอัปเดตการ์ดทั้งหมด
+    document.addEventListener('change', function (e) {
+      const el = e.target;
+      if (!el || el.tagName !== 'INPUT' || el.type === 'range') return;
+
+      const oninputAttr = el.getAttribute('oninput');
+      if (!oninputAttr) return;
+
+      if (el.type === 'number') {
+        const minVal = el.min !== '' ? Number(el.min) : null;
+        const maxVal = el.max !== '' ? Number(el.max) : null;
+        let val = Number(el.value);
+        if (el.value === '' || isNaN(val)) {
+          val = minVal !== null ? minVal : 1000;
+        } else {
+          if (minVal !== null && val < minVal) val = minVal;
+          if (maxVal !== null && val > maxVal) val = maxVal;
+        }
+        el.value = val;
+      }
+
+      // จำช่องที่ผู้ใช้คลิกต่อไปไว้ (กรณีพิมพ์ชื่อเสร็จแล้วคลิกช่องแต้มต่อทันที เคอร์เซอร์จะได้ไม่หลุด)
+      setTimeout(() => {
+        const nextFocusedAttr = document.activeElement ? document.activeElement.getAttribute('oninput') : null;
+
+        const fn = new Function(oninputAttr);
+        fn.call(el);
+        renderAll();
+
+        if (nextFocusedAttr && nextFocusedAttr !== oninputAttr) {
+          const targetInput = document.querySelector(`input[oninput="${nextFocusedAttr}"]`);
+          if (targetInput) targetInput.focus();
+        }
+      }, 10);
+    }, true);
+  })();
 </script>
 
 </body>
