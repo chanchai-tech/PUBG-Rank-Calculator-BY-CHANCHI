@@ -2693,5 +2693,40 @@
       setInterval(updateLiveTimers, 1000);
     };
   </script>
+
+<script>
+  // ปลดล็อกให้คลิกพิมพ์และลบตัวเลขในช่องกรอกแต้มได้ตามปกติ
+  document.addEventListener('DOMContentLoaded', () => {
+    const numberInputs = document.querySelectorAll('input[type="number"]');
+
+    numberInputs.forEach(input => {
+      // เอาคำสั่ง oninput เดิมที่คอยบังคับเขียนค่า 1000 ทับขณะพิมพ์ออกชั่วคราวระหว่างที่เคอร์เซอร์อยู่ในช่อง
+      const originalOnInput = input.getAttribute('oninput');
+      if (originalOnInput) {
+        input.removeAttribute('oninput');
+
+        // ให้คำนวณผลลัพธ์เมื่อพิมพ์ครบ 4 หลักขึ้นไป โดยไม่รีเซ็ตเคอร์เซอร์
+        input.addEventListener('input', function () {
+          const val = Number(this.value);
+          if (this.value !== '' && val >= 1000) {
+            const slider = document.querySelector('input[type="range"]');
+            if (slider && this.min === '1000') {
+              slider.value = Math.min(Number(slider.max) || 7500, val);
+            }
+          }
+        });
+
+        // บังคับค่าขั้นต่ำ 1000 และอัปเดตหน้าจอทั้งหมดเมื่อพิมพ์เสร็จแล้วกด Enter หรือคลิกออกนอกช่อง
+        input.addEventListener('change', function () {
+          const minVal = Number(this.min) || 1;
+          if (this.value === '' || Number(this.value) < minVal) {
+            this.value = minVal;
+          }
+          eval(originalOnInput);
+        });
+      }
+    });
+  });
+</script>
 </body>
 </html>
