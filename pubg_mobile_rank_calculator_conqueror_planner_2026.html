@@ -1,0 +1,2622 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PUBG MOBILE Rank & Season Reset Calculator (2026 Edition)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Kanit (Thai UI) & JetBrains Mono (Numbers/Timers) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Kanit', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            obsidian: '#0B0F19',
+            slateDark: '#111827',
+            slateCard: '#1E293B',
+            pubgGold: '#F59E0B',
+            pubgAmber: '#D97706',
+            conqRed: '#EF4444',
+            tacGreen: '#10B981',
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Tactical Styling & Scrollbars */
+    body {
+      background-color: #0B0F19;
+      background-image: 
+        radial-gradient(circle at 15% 15%, rgba(245, 158, 11, 0.07) 0%, transparent 35%),
+        radial-gradient(circle at 85% 80%, rgba(239, 68, 68, 0.06) 0%, transparent 40%),
+        linear-gradient(180deg, #0B0F19 0%, #111827 100%);
+      color: #F8FAFC;
+      font-family: 'Kanit', sans-serif;
+      min-height: 100vh;
+    }
+
+    .tac-grid-bg {
+      background-size: 32px 32px;
+      background-image: 
+        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    }
+
+    .tac-card {
+      background: rgba(30, 41, 59, 0.78);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.6);
+      transition: border-color 0.2s ease, transform 0.2s ease;
+    }
+
+    .tac-card:hover {
+      border-color: rgba(245, 158, 11, 0.28);
+    }
+
+    .tac-border-gold {
+      border: 1px solid rgba(245, 158, 11, 0.45);
+      box-shadow: 0 0 20px rgba(245, 158, 11, 0.12);
+    }
+
+    .tac-border-crimson {
+      border: 1px solid rgba(239, 68, 68, 0.5);
+      box-shadow: 0 0 25px rgba(239, 68, 68, 0.15);
+    }
+
+    /* Range Slider Styling */
+    input[type=range].tac-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 10px;
+      background: linear-gradient(90deg, #334155 0%, #F59E0B 60%, #EF4444 100%);
+      border-radius: 999px;
+      outline: none;
+    }
+
+    input[type=range].tac-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #F59E0B;
+      border: 3px solid #FFF;
+      cursor: pointer;
+      box-shadow: 0 0 12px rgba(245, 158, 11, 0.9);
+      transition: transform 0.15s ease;
+    }
+
+    input[type=range].tac-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0B0F19;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #F59E0B;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.5)); }
+      50% { filter: drop-shadow(0 0 18px rgba(239, 68, 68, 0.85)); }
+    }
+    .emblem-glow {
+      animation: pulseGlow 3s infinite ease-in-out;
+    }
+  </style>
+</head>
+<body class="tac-grid-bg antialiased selection:bg-pubgGold selection:text-obsidian">
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- Confirmation Modal (No native alert/confirm) -->
+  <div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/75 backdrop-blur-sm p-4">
+    <div class="tac-card tac-border-gold rounded-2xl max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center gap-3 text-pubgGold">
+        <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+        <h3 id="confirmModalTitle" class="text-lg font-bold text-white">ยืนยันการทำรายการ</h3>
+      </div>
+      <p id="confirmModalMessage" class="text-slate-300 text-sm leading-relaxed"></p>
+      <div class="flex justify-end gap-3 pt-2">
+        <button id="confirmCancelBtn" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition">
+          ยกเลิก
+        </button>
+        <button id="confirmOkBtn" class="px-5 py-2 rounded-xl bg-conqRed hover:bg-red-600 text-white text-sm font-semibold shadow-lg shadow-red-500/20 transition">
+          ยืนยัน
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Tactical Header & Live Timers -->
+  <header class="border-b border-slate-800/80 bg-obsidian/90 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3">
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        
+        <!-- Brand Title & Season Badge -->
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-pubgGold via-amber-600 to-conqRed p-0.5 shadow-lg shadow-amber-500/20">
+              <div class="w-full h-full bg-obsidian rounded-[10px] flex items-center justify-center">
+                <i class="fa-solid fa-helmet-safety text-pubgGold text-xl"></i>
+              </div>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 flex-wrap">
+                <h1 class="text-lg sm:text-xl font-bold tracking-tight text-white">
+                  PUBG MOBILE <span class="text-pubgGold">RANK HUB</span>
+                </h1>
+                <span id="headerSeasonBadge" class="px-2.5 py-0.5 text-xs font-mono font-bold rounded-full bg-pubgGold/15 text-pubgGold border border-pubgGold/40">
+                  C11S33 • 2026
+                </span>
+              </div>
+              <p class="text-xs text-slate-400">ระบบคำนวณแรงค์ รีแรงค์ซีซั่นใหม่ & วางแผนไต่ Conqueror ครบวงจร</p>
+            </div>
+          </div>
+
+          <!-- Quick Save Indicator (Mobile) -->
+          <div class="lg:hidden flex items-center gap-1.5 text-xs text-tacGreen bg-tacGreen/10 border border-tacGreen/30 px-2.5 py-1 rounded-lg">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>Auto-Save</span>
+          </div>
+        </div>
+
+        <!-- Live Countdown Widgets -->
+        <div class="grid grid-cols-2 sm:flex sm:items-center gap-2 sm:gap-3">
+          <!-- Daily Conqueror Reset Countdown -->
+          <div class="bg-slate-900/90 border border-red-500/30 rounded-xl px-3 py-1.5 flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-red-500/15 border border-red-500/30 flex items-center justify-center text-conqRed shrink-0">
+              <i class="fa-solid fa-crown text-sm"></i>
+            </div>
+            <div>
+              <div class="text-[11px] text-slate-400 flex items-center gap-1">
+                <span>รีเซ็ตป้าย Conqueror</span>
+                <span id="headerResetClockLabel" class="text-red-400 font-mono">(07:20)</span>
+              </div>
+              <div id="conquerorCountdown" class="font-mono text-sm sm:text-base font-bold text-red-400 tracking-wider">
+                00:00:00
+              </div>
+            </div>
+          </div>
+
+          <!-- Season End Countdown -->
+          <div class="bg-slate-900/90 border border-amber-500/30 rounded-xl px-3 py-1.5 flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-pubgGold shrink-0">
+              <i class="fa-solid fa-hourglass-half text-sm"></i>
+            </div>
+            <div>
+              <div class="text-[11px] text-slate-400">เวลาก่อนรีแรงค์ซีซั่น</div>
+              <div id="seasonCountdown" class="font-mono text-sm sm:text-base font-bold text-pubgGold tracking-wider">
+                00d 00h 00m
+              </div>
+            </div>
+          </div>
+
+          <!-- Auto-save status badge (Desktop) -->
+          <button onclick="switchTab('tab-settings')" title="ตั้งค่าระบบและสำรองข้อมูล" class="hidden lg:flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800/80 hover:bg-slate-700/80 border border-slate-700 text-xs text-slate-300 transition">
+            <span class="w-2 h-2 rounded-full bg-tacGreen animate-ping"></span>
+            <span>บันทึกอัตโนมัติ</span>
+            <i class="fa-solid fa-gear text-pubgGold ml-1"></i>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto pt-3 pb-1 no-scrollbar" aria-label="Main Navigation">
+        <button onclick="switchTab('tab-calculator')" id="btn-tab-calculator" class="tab-btn shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-2 bg-pubgGold text-obsidian shadow-lg shadow-amber-500/20">
+          <i class="fa-solid fa-calculator"></i>
+          <span>1. คำนวณแรงค์ & รีซีซั่น</span>
+        </button>
+        <button onclick="switchTab('tab-planner')" id="btn-tab-planner" class="tab-btn shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition flex items-center gap-2 bg-slate-800/70 text-slate-300 hover:bg-slate-800 hover:text-white">
+          <i class="fa-solid fa-fire-flame-curved text-conqRed"></i>
+          <span>2. วางแผนไต่ Conqueror</span>
+        </button>
+        <button onclick="switchTab('tab-promotion')" id="btn-tab-promotion" class="tab-btn shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition flex items-center gap-2 bg-slate-800/70 text-slate-300 hover:bg-slate-800 hover:text-white">
+          <i class="fa-solid fa-medal text-amber-400"></i>
+          <span>3. สอบเลื่อนขั้น 2026</span>
+          <span class="px-1.5 py-0.2 text-[10px] rounded bg-amber-500/20 text-amber-300 font-mono">V4.2+</span>
+        </button>
+        <button onclick="switchTab('tab-modes')" id="btn-tab-modes" class="tab-btn shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition flex items-center gap-2 bg-slate-800/70 text-slate-300 hover:bg-slate-800 hover:text-white">
+          <i class="fa-solid fa-layer-group text-sky-400"></i>
+          <span>4. ครบ 6 โหมด & บันทึกรายเกม</span>
+        </button>
+        <button onclick="switchTab('tab-settings')" id="btn-tab-settings" class="tab-btn shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition flex items-center gap-2 bg-slate-800/70 text-slate-300 hover:bg-slate-800 hover:text-white">
+          <i class="fa-solid fa-sliders text-emerald-400"></i>
+          <span>5. ตารางอ้างอิง & ตั้งค่าระยะยาว</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+    <!-- =================================================================== -->
+    <!-- TAB 1: หน้าหลักคำนวณแรงค์ & รีซีซั่น (RANK & RESET CALCULATOR)          -->
+    <!-- =================================================================== -->
+    <section id="tab-calculator" class="tab-panel space-y-6">
+      
+      <!-- Top Grid: Left Input Card + Center Current Rank Status + Right Post-Reset Result -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- COLUMN 1: Interactive Point Input Card (4 cols) -->
+        <div class="lg:col-span-4 tac-card tac-border-gold rounded-2xl p-5 flex flex-col justify-between space-y-5">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-700/70 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-6 rounded-full bg-pubgGold"></span>
+                <h2 class="text-base sm:text-lg font-bold text-white">กรอกแต้มแรงค์ปัจจุบัน</h2>
+              </div>
+              <span class="text-xs font-mono px-2 py-0.5 rounded bg-pubgGold/15 text-pubgGold border border-pubgGold/30">
+                STEP 1
+              </span>
+            </div>
+
+            <!-- Active Mode Selector -->
+            <div>
+              <label for="activeModeSelect" class="block text-xs text-slate-400 mb-1.5">
+                เลือกโหมดที่กำลังเล่น (ซิงค์กับตาราง 6 โหมดอัตโนมัติ)
+              </label>
+              <div class="relative">
+                <select id="activeModeSelect" onchange="handleActiveModeChange(this.value)" class="w-full bg-slate-900/90 border border-slate-700 focus:border-pubgGold rounded-xl px-3.5 py-2.5 text-sm font-semibold text-white outline-none transition">
+                  <option value="tpp_squad">TPP Squad (มุมมองที่ 3 - ทีม 4 คน)</option>
+                  <option value="tpp_duo">TPP Duo (มุมมองที่ 3 - คู่ 2 คน)</option>
+                  <option value="tpp_solo">TPP Solo (มุมมองที่ 3 - ลุยเดี่ยว)</option>
+                  <option value="fpp_squad">FPP Squad (มุมมองที่ 1 - ทีม 4 คน)</option>
+                  <option value="fpp_duo">FPP Duo (มุมมองที่ 1 - คู่ 2 คน)</option>
+                  <option value="fpp_solo">FPP Solo (มุมมองที่ 1 - ลุยเดี่ยว)</option>
+                </select>
+              </div>
+            </div>
+
+            <!-- Main Points Input & Range Slider -->
+            <div class="bg-slate-900/80 border border-amber-500/30 rounded-2xl p-4 space-y-3">
+              <div class="flex items-center justify-between">
+                <label for="currentPointsInput" class="text-xs font-medium text-amber-300">
+                  <i class="fa-solid fa-star mr-1"></i>แต้มแรงค์ปัจจุบันของคุณ
+                </label>
+                <span class="text-[11px] text-slate-400 font-mono">1,000 - 9,999</span>
+              </div>
+
+              <div class="flex items-center gap-2">
+                <input
+                  id="currentPointsInput"
+                  type="number"
+                  min="1000"
+                  max="9999"
+                  step="1"
+                  value="5720"
+                  oninput="handlePointsChange(this.value)"
+                  class="w-full bg-obsidian border-2 border-pubgGold/70 focus:border-pubgGold rounded-xl px-4 py-2.5 text-2xl sm:text-3xl font-mono font-extrabold text-pubgGold text-center outline-none shadow-inner"
+                />
+              </div>
+
+              <input
+                id="currentPointsSlider"
+                type="range"
+                min="1000"
+                max="8000"
+                step="5"
+                value="5720"
+                oninput="handlePointsChange(this.value)"
+                class="tac-slider"
+              />
+
+              <!-- Quick Adjust Tactical Buttons -->
+              <div>
+                <div class="text-[11px] text-slate-400 mb-1.5 flex items-center justify-between">
+                  <span>ปุ่มปรับแต้มด่วนหลังจบแมตช์:</span>
+                  <button onclick="undoLastPointChange()" id="undoPointBtn" class="text-[11px] text-amber-400 hover:underline hidden">
+                    <i class="fa-solid fa-rotate-left mr-0.5"></i>ย้อนกลับค่าเดิม
+                  </button>
+                </div>
+                <div class="grid grid-cols-4 gap-1.5 font-mono text-xs">
+                  <button onclick="adjustPoints(-30)" class="py-1.5 rounded-lg bg-red-950/60 hover:bg-red-900/70 border border-red-500/30 text-red-300 font-bold transition">-30</button>
+                  <button onclick="adjustPoints(-15)" class="py-1.5 rounded-lg bg-red-950/60 hover:bg-red-900/70 border border-red-500/30 text-red-300 font-bold transition">-15</button>
+                  <button onclick="adjustPoints(-5)" class="py-1.5 rounded-lg bg-red-950/60 hover:bg-red-900/70 border border-red-500/30 text-red-300 font-bold transition">-5</button>
+                  <button onclick="adjustPoints(5)" class="py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/70 border border-emerald-500/30 text-emerald-300 font-bold transition">+5</button>
+                  <button onclick="adjustPoints(10)" class="py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/70 border border-emerald-500/30 text-emerald-300 font-bold transition">+10</button>
+                  <button onclick="adjustPoints(15)" class="py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/70 border border-emerald-500/30 text-emerald-300 font-bold transition">+15</button>
+                  <button onclick="adjustPoints(25)" class="py-1.5 rounded-lg bg-emerald-950/60 hover:bg-emerald-900/70 border border-emerald-500/30 text-emerald-300 font-bold transition">+25</button>
+                  <button onclick="adjustPoints(100)" class="py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-bold transition">+100</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Conqueror Cutoff & Avg Points per Match -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3">
+                <label for="conqThresholdInput" class="block text-[11px] text-red-300 mb-1">
+                  <i class="fa-solid fa-trophy mr-1"></i>เกณฑ์ Top 500 เซิร์ฟวันนี้
+                </label>
+                <input
+                  id="conqThresholdInput"
+                  type="number"
+                  min="4200"
+                  max="9999"
+                  value="5850"
+                  oninput="handleConqThresholdChange(this.value)"
+                  class="w-full bg-obsidian border border-red-500/40 focus:border-red-400 rounded-lg px-2.5 py-1.5 font-mono text-base font-bold text-red-400 outline-none"
+                />
+                <span class="text-[10px] text-slate-400 mt-1 block">ขั้นต่ำ 5,200 (Ace Dominator)</span>
+              </div>
+
+              <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3">
+                <div class="flex items-center justify-between mb-1">
+                  <label for="avgPtsPerMatchInput" class="text-[11px] text-emerald-300">
+                    <i class="fa-solid fa-chart-line mr-1"></i>แต้มบวกเฉลี่ย / เกม
+                  </label>
+                  <button onclick="useLoggedAvgPoints()" title="ดึงค่าเฉลี่ยจากบันทึกการเล่นจริง" class="text-[10px] text-sky-400 hover:underline">
+                    ใช้ค่าจริง
+                  </button>
+                </div>
+                <input
+                  id="avgPtsPerMatchInput"
+                  type="number"
+                  min="1"
+                  max="100"
+                  value="15"
+                  oninput="handleAvgPtsChange(this.value)"
+                  class="w-full bg-obsidian border border-emerald-500/40 focus:border-emerald-400 rounded-lg px-2.5 py-1.5 font-mono text-base font-bold text-emerald-400 outline-none"
+                />
+                <span class="text-[10px] text-slate-400 mt-1 block">ใช้ประเมินจำนวนเกมที่ต้องเล่น</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Action to Log Match -->
+          <div class="pt-2 border-t border-slate-800 flex items-center justify-between text-xs text-slate-400">
+            <span>ต้องการบันทึก K/D และอันดับรายเกม?</span>
+            <button onclick="switchTab('tab-modes')" class="text-pubgGold hover:underline font-semibold flex items-center gap-1">
+              <span>ไปหน้าบันทึกรายเกม</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- COLUMN 2: Current Rank Status & Next Step Progress (4 cols) -->
+        <div class="lg:col-span-4 tac-card rounded-2xl p-5 flex flex-col justify-between space-y-4 relative overflow-hidden">
+          <!-- Subtle Top Accent Glow -->
+          <div id="rankGlowBar" class="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-pubgGold via-amber-400 to-conqRed"></div>
+
+          <div class="space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-700/70 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-6 rounded-full bg-emerald-400"></span>
+                <h2 class="text-base sm:text-lg font-bold text-white">สถานะแรงค์ปัจจุบัน</h2>
+              </div>
+              <span id="activeModeBadge" class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-800 text-amber-300 border border-slate-700">
+                TPP Squad
+              </span>
+            </div>
+
+            <!-- Dynamic Rank Emblem & Tier Name -->
+            <div class="flex flex-col items-center text-center py-2">
+              <div id="rankEmblemContainer" class="w-28 h-28 flex items-center justify-center emblem-glow mb-2">
+                <!-- SVG Injected via JS -->
+              </div>
+              <div id="currentRankTitle" class="text-2xl sm:text-3xl font-extrabold tracking-wide text-pubgGold">
+                Ace Dominator (15★)
+              </div>
+              <div id="currentStarVisual" class="text-sm font-mono text-amber-300 mt-1 px-3 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">
+                ★ 15 ดาว (Dominator)
+              </div>
+            </div>
+
+            <!-- Progress Bar to Next Rank / Star -->
+            <div class="bg-slate-900/85 border border-slate-800 rounded-xl p-3.5 space-y-2">
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-slate-400">เป้าหมายถัดไป: <strong id="nextRankName" class="text-white">Ace Dominator (16★)</strong></span>
+                <span id="nextRankTargetPts" class="font-mono text-pubgGold font-bold">5,800 แต้ม</span>
+              </div>
+              <div class="w-full h-3 bg-slate-800 rounded-full overflow-hidden p-0.5">
+                <div id="nextRankProgressBar" class="h-full rounded-full bg-gradient-to-r from-amber-500 to-emerald-400 transition-all duration-300" style="width: 20%"></div>
+              </div>
+              <div class="flex items-center justify-between text-xs pt-1">
+                <span class="text-slate-300">
+                  ขาดอีก <strong id="ptsNeededNext" class="font-mono text-base text-amber-400">80</strong> แต้ม
+                </span>
+                <span class="text-slate-300">
+                  ประมาณ <strong id="matchesNeededNext" class="font-mono text-base text-emerald-400">6</strong> เกม
+                </span>
+              </div>
+            </div>
+
+            <!-- 2026 Promotion Match Notification Box -->
+            <div id="promoEligibilityAlert" class="rounded-xl p-3 border text-xs flex items-start gap-2.5 bg-amber-500/10 border-amber-500/30 text-amber-200">
+              <i class="fa-solid fa-medal text-base text-pubgGold mt-0.5 shrink-0"></i>
+              <div class="space-y-1 flex-1">
+                <div id="promoAlertTitle" class="font-bold text-white">เกณฑ์สอบเลื่อนขั้น 2026 (Promotion Matches)</div>
+                <p id="promoAlertDesc" class="text-slate-300 leading-relaxed"></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Conqueror Status Banner -->
+          <div id="conquerorStatusBanner" class="rounded-xl p-3.5 border transition-all">
+            <!-- Populated dynamically via JS -->
+          </div>
+        </div>
+
+        <!-- COLUMN 3: Post-Reset Simulation Card (4 cols) -->
+        <div class="lg:col-span-4 tac-card rounded-2xl p-5 flex flex-col justify-between space-y-4">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-700/70 pb-3">
+              <div class="flex items-center gap-2">
+                <span class="w-2.5 h-6 rounded-full bg-sky-400"></span>
+                <h2 class="text-base sm:text-lg font-bold text-white">ผลลัพธ์หลังรีแรงค์ซีซั่นใหม่</h2>
+              </div>
+              <span class="text-xs font-mono px-2 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/30">
+                RESET SIM
+              </span>
+            </div>
+
+            <!-- Post-Reset Rank & Starting Points Highlight -->
+            <div class="bg-gradient-to-br from-slate-900 via-slate-900 to-sky-950/40 border border-sky-500/30 rounded-2xl p-4 flex items-center gap-4">
+              <div id="resetEmblemContainer" class="w-20 h-20 shrink-0 flex items-center justify-center">
+                <!-- SVG Injected via JS -->
+              </div>
+              <div class="space-y-1">
+                <div class="text-xs text-sky-300 font-medium">แรงค์เริ่มต้นซีซั่นหน้า</div>
+                <div id="postResetRankName" class="text-2xl font-extrabold text-white">Diamond IV</div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs text-slate-400">แต้มเริ่มต้น:</span>
+                  <span id="postResetPoints" class="font-mono text-lg font-bold text-sky-400">3,100 แต้ม</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Breakdown Metrics -->
+            <div class="grid grid-cols-2 gap-2.5">
+              <div class="bg-slate-900/75 border border-slate-800 rounded-xl p-3">
+                <div class="text-[11px] text-slate-400">แต้มที่ถูกลดลงตอนรีซีซั่น</div>
+                <div id="pointsDroppedOnReset" class="font-mono text-lg font-bold text-red-400 mt-0.5">-2,620 แต้ม</div>
+                <div id="pointsDropPercent" class="text-[11px] text-slate-400">ลดลง 45.8%</div>
+              </div>
+
+              <div class="bg-slate-900/75 border border-slate-800 rounded-xl p-3">
+                <div class="text-[11px] text-slate-400">ขยับอีกกี่แต้มถึงเพดานรีสูงสุด</div>
+                <div id="ptsToMaxResetBracket" class="font-mono text-lg font-bold text-emerald-400 mt-0.5">สูงสุดแล้ว!</div>
+                <div id="maxResetBracketHint" class="text-[11px] text-slate-400">เพดานสูงสุด 5,300+ (3,100)</div>
+              </div>
+            </div>
+
+            <!-- Next Season Climb Back Calculator -->
+            <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 space-y-2.5">
+              <div class="text-xs font-semibold text-amber-300 flex items-center gap-1.5">
+                <i class="fa-solid fa-route"></i>
+                <span>แผนเก็บแต้มทวงคืนในซีซั่นใหม่ (เริ่มจากแต้มหลังรี)</span>
+              </div>
+
+              <div class="flex items-center justify-between text-xs border-b border-slate-800 pb-2">
+                <span class="text-slate-300">กลับขึ้น <strong class="text-amber-400">Ace (4,200)</strong>:</span>
+                <div class="text-right font-mono">
+                  <span id="newSeasonToAcePts" class="text-white font-bold">+1,100 แต้ม</span>
+                  <span class="text-slate-400 ml-1">(<span id="newSeasonToAceMatches" class="text-emerald-400">74</span> เกม)</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between text-xs border-b border-slate-800 pb-2">
+                <span class="text-slate-300">กลับขึ้น <strong class="text-amber-500">Ace Master (4,700)</strong>:</span>
+                <div class="text-right font-mono">
+                  <span id="newSeasonToMasterPts" class="text-white font-bold">+1,600 แต้ม</span>
+                  <span class="text-slate-400 ml-1">(<span id="newSeasonToMasterMatches" class="text-emerald-400">107</span> เกม)</span>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between text-xs">
+                <span class="text-slate-300">กลับขึ้น <strong class="text-conqRed">Ace Dominator (5,200)</strong>:</span>
+                <div class="text-right font-mono">
+                  <span id="newSeasonToDomPts" class="text-white font-bold">+2,100 แต้ม</span>
+                  <span class="text-slate-400 ml-1">(<span id="newSeasonToDomMatches" class="text-emerald-400">140</span> เกม)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="text-[11px] text-slate-400 bg-slate-900/60 rounded-lg px-3 py-2 border border-slate-800/80">
+            <i class="fa-solid fa-circle-info text-sky-400 mr-1"></i>
+            หมายเหตุ: ผู้เล่นที่มีแต้ม <strong>5,300 ขึ้นไป</strong> (Ace Dominator 11★+ และ Conqueror) จะถูกรีเซ็ตมาเริ่มที่ <strong>Diamond IV (3,100 แต้ม)</strong> เท่ากันทั้งหมดเพื่อชิงป้ายแดงต้นซีซั่น
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Milestone Tracker Table (ตารางเช็คระยะห่างแต่ละเป้าหมายแรงค์ใหญ่) -->
+      <div class="tac-card rounded-2xl p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-800 pb-3">
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-flag-checkered text-pubgGold"></i>
+              <span>ตารางเช็คระยะห่างแต่ละเป้าหมายแรงค์ใหญ่ (Milestone Tracker)</span>
+            </h3>
+            <p class="text-xs text-slate-400">เปรียบเทียบแต้มปัจจุบันของคุณกับทุกขั้นสำคัญ พร้อมคำนวณแต้มที่ขาดและผลลัพธ์หลังรีแรงค์ของแต่ละขั้น</p>
+          </div>
+          <div class="flex items-center gap-2 text-xs">
+            <span class="px-2.5 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
+              <i class="fa-solid fa-check mr-1"></i>ผ่านเกณฑ์แล้ว
+            </span>
+            <span class="px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-300 border border-amber-500/30">
+              <i class="fa-solid fa-hourglass-start mr-1"></i>กำลังไต่ระดับ
+            </span>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-800 text-[11px] sm:text-xs text-slate-400 uppercase">
+                <th class="py-3 px-3">เป้าหมายแรงค์ (Milestone)</th>
+                <th class="py-3 px-3 text-right">แต้มที่ต้องใช้</th>
+                <th class="py-3 px-3 text-center">สถานะปัจจุบัน</th>
+                <th class="py-3 px-3 text-right">แต้มที่ขาด / เกิน</th>
+                <th class="py-3 px-3 text-right">จำนวนเกมโดยประมาณ</th>
+                <th class="py-3 px-3">เงื่อนไขพิเศษปี 2026</th>
+                <th class="py-3 px-3 text-right">ถ้าจบที่ขั้นนี้ รีซีซั่นได้</th>
+              </tr>
+            </thead>
+            <tbody id="milestoneTableBody" class="divide-y divide-slate-800/60 text-xs sm:text-sm">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 2: วางแผนไต่ CONQUEROR (CONQUEROR PUSH PLANNER)                  -->
+    <!-- =================================================================== -->
+    <section id="tab-planner" class="tab-panel hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Left Input Config (5 cols) -->
+        <div class="lg:col-span-5 tac-card tac-border-crimson rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div class="flex items-center gap-2">
+              <i class="fa-solid fa-fire-flame-curved text-conqRed text-lg"></i>
+              <h2 class="text-base sm:text-lg font-bold text-white">ตั้งค่าแผนไต่ป้ายแดง Conqueror</h2>
+            </div>
+            <button onclick="syncPlannerWithMain()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs border border-amber-500/30 transition">
+              <i class="fa-solid fa-arrows-rotate mr-1"></i>ดึงแต้มจากหน้าหลัก
+            </button>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">แต้มเริ่มต้นของคุณ</label>
+              <input id="planCurrentPts" type="number" value="5720" oninput="calculateConquerorPlan()" class="w-full bg-obsidian border border-slate-700 focus:border-pubgGold rounded-xl px-3 py-2 font-mono text-base font-bold text-pubgGold outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">แต้ม Top 500 ของเซิร์ฟวันนี้</label>
+              <input id="planServerCutoff" type="number" value="5850" oninput="calculateConquerorPlan()" class="w-full bg-obsidian border border-slate-700 focus:border-conqRed rounded-xl px-3 py-2 font-mono text-base font-bold text-conqRed outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">แต้มเซิร์ฟขยับขึ้นเฉลี่ย (แต้ม/วัน)</label>
+              <input id="planDailyInflation" type="number" min="0" max="200" value="25" oninput="calculateConquerorPlan()" class="w-full bg-obsidian border border-slate-700 focus:border-amber-400 rounded-xl px-3 py-2 font-mono text-base font-bold text-amber-300 outline-none" />
+              <span class="text-[10px] text-slate-400">ต้นซีซั่น ~40-60 / กลาง-ท้ายซีซั่น ~15-30</span>
+            </div>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">จำนวนวันที่ต้องการดันให้ติด</label>
+              <input id="planTargetDays" type="number" min="1" max="30" value="3" oninput="calculateConquerorPlan()" class="w-full bg-obsidian border border-slate-700 focus:border-sky-400 rounded-xl px-3 py-2 font-mono text-base font-bold text-sky-300 outline-none" />
+              <span class="text-[10px] text-slate-400">เช่น ดันเสาร์-อาทิตย์ 2-3 วัน หรือ 7 วัน</span>
+            </div>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">แต้มบวกสุทธิเฉลี่ยต่อเกม</label>
+              <input id="planAvgPtsPerMatch" type="number" min="1" max="100" value="15" oninput="calculateConquerorPlan()" class="w-full bg-obsidian border border-slate-700 focus:border-emerald-400 rounded-xl px-3 py-2 font-mono text-base font-bold text-emerald-400 outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">เวลาเล่นเฉลี่ยต่อเกม (นาที)</label>
+              <input id="planAvgMatchMinutes" type="number" min="5" max="45" value="24" oninput="calculateConquerorPlan()" class="w-full bg-obsidian border border-slate-700 focus:border-slate-500 rounded-xl px-3 py-2 font-mono text-base font-bold text-white outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">แต้มเผื่อเซฟตี้กันหลุด (Buffer)</label>
+              <input id="planSafetyBuffer" type="number" min="0" max="300" value="20" oninput="calculateConquerorPlan()" class="w-full bg-obsidian border border-slate-700 focus:border-amber-400 rounded-xl px-3 py-2 font-mono text-base font-bold text-amber-300 outline-none" />
+              <span class="text-[10px] text-slate-400">แต้มกันโดนแซงก่อนรีเซ็ต 07:20 น.</span>
+            </div>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">บัตรป้องกันแรงค์ที่มี (ใบ)</label>
+              <input id="planProtectionCards" type="number" min="0" max="50" value="3" oninput="calculateConquerorPlan()" class="w-full bg-obsidian border border-slate-700 focus:border-emerald-400 rounded-xl px-3 py-2 font-mono text-base font-bold text-emerald-300 outline-none" />
+            </div>
+          </div>
+
+          <!-- Quick Preset Scenarios -->
+          <div class="pt-2 border-t border-slate-800">
+            <div class="text-xs text-slate-400 mb-2">พรีเซ็ตแผนการดันยอดนิยม:</div>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="applyPlannerPreset(2, 35, 18)" class="px-3 py-1.5 rounded-lg bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-xs text-red-300 font-medium transition">
+                ⚡ สปีดรัน 2 วันหยุด (ต้นซีซั่น)
+              </button>
+              <button onclick="applyPlannerPreset(3, 25, 15)" class="px-3 py-1.5 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-xs text-amber-300 font-medium transition">
+                🔥 ดัน 3 วันมาตรฐาน
+              </button>
+              <button onclick="applyPlannerPreset(7, 20, 14)" class="px-3 py-1.5 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-xs text-emerald-300 font-medium transition">
+                🛡️ ไต่ชัวร์ 7 วัน (วันละ 2-3 ชม.)
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Summary & Daily Schedule (7 cols) -->
+        <div class="lg:col-span-7 tac-card rounded-2xl p-5 space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <h3 class="text-base sm:text-lg font-bold text-white">สรุปเป้าหมายและตารางเก็บแต้มรายวัน</h3>
+              <p class="text-xs text-slate-400">คำนวณรวมอัตราแต้มเซิร์ฟขยับรายวัน (Server Inflation) และแต้มกันหลุดก่อนรีเซ็ต 07:20 น.</p>
+            </div>
+            <span id="planFeasibilityBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 self-start sm:self-auto">
+              กำลังประเมิน...
+            </span>
+          </div>
+
+          <!-- 4 Key Summary KPI Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="bg-slate-900/90 border border-red-500/30 rounded-xl p-3">
+              <div class="text-[11px] text-slate-400">เป้าแต้มวันสุดท้าย</div>
+              <div id="planFinalTargetPts" class="font-mono text-xl font-extrabold text-conqRed mt-0.5">5,945</div>
+              <div class="text-[10px] text-slate-400">รวมแต้มเซิร์ฟไหล + Buffer</div>
+            </div>
+
+            <div class="bg-slate-900/90 border border-amber-500/30 rounded-xl p-3">
+              <div class="text-[11px] text-slate-400">แต้มสุทธิที่ต้องเก็บเพิ่ม</div>
+              <div id="planTotalNetPtsNeeded" class="font-mono text-xl font-extrabold text-pubgGold mt-0.5">+225</div>
+              <div id="planDailyPtsQuota" class="text-[10px] text-amber-300 font-mono">เฉลี่ยวันละ +75 แต้ม</div>
+            </div>
+
+            <div class="bg-slate-900/90 border border-emerald-500/30 rounded-xl p-3">
+              <div class="text-[11px] text-slate-400">จำนวนเกมที่ต้องเล่น</div>
+              <div id="planMatchesPerDay" class="font-mono text-xl font-extrabold text-emerald-400 mt-0.5">5 เกม/วัน</div>
+              <div id="planTotalMatches" class="text-[10px] text-slate-400">รวมทั้งหมด 15 เกม</div>
+            </div>
+
+            <div class="bg-slate-900/90 border border-sky-500/30 rounded-xl p-3">
+              <div class="text-[11px] text-slate-400">เวลาเล่นโดยประมาณ</div>
+              <div id="planHoursPerDay" class="font-mono text-xl font-extrabold text-sky-400 mt-0.5">2.0 ชม./วัน</div>
+              <div id="planCardCoverage" class="text-[10px] text-slate-400">บัตรกันลดช่วยเซฟ ~45 แต้ม</div>
+            </div>
+          </div>
+
+          <!-- Day-by-Day Schedule Table -->
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-slate-800 text-[11px] text-slate-400 uppercase">
+                  <th class="py-2.5 px-3">วันที่</th>
+                  <th class="py-2.5 px-3 text-right">เกณฑ์ Top 500 คาดการณ์</th>
+                  <th class="py-2.5 px-3 text-right">โควต้าแต้มต่อวัน</th>
+                  <th class="py-2.5 px-3 text-right">เป้าแต้มสะสมจบวัน</th>
+                  <th class="py-2.5 px-3 text-right">จำนวนเกม (เวลา)</th>
+                  <th class="py-2.5 px-3 text-center">เช็คชื่อสำเร็จ</th>
+                </tr>
+              </thead>
+              <tbody id="plannerScheduleBody" class="divide-y divide-slate-800/60 text-xs sm:text-sm">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 3: สอบเลื่อนขั้น 2026 (2026 PROMOTION MATCHES TRACKER)            -->
+    <!-- =================================================================== -->
+    <section id="tab-promotion" class="tab-panel hidden space-y-6">
+      
+      <!-- Overview Banner of 2026 V4.2+ Rules -->
+      <div class="tac-card tac-border-gold rounded-2xl p-5">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div class="space-y-1.5">
+            <div class="flex items-center gap-2">
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-mono font-bold bg-pubgGold text-obsidian">NEW 2026 RULE</span>
+              <h2 class="text-lg sm:text-xl font-bold text-white">ระบบจำลองและเช็คผลสอบเลื่อนขั้น (Promotion Matches V4.2+)</h2>
+            </div>
+            <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              เมื่อเก็บแต้มครบเกณฑ์ <strong>4,200 (Ace)</strong>, <strong>4,700 (Ace Master)</strong> หรือ <strong>5,200 (Ace Dominator)</strong> ในโหมด TPP Squad สามารถลงทะเบียนสอบเลื่อนขั้นในแผนที่ <strong>Erangel</strong> หรือ <strong>Livik</strong> โดยวัดจาก<strong>อันดับการรอดชีวิตส่วนตัว</strong> (เพื่อนตายก่อนไม่เสียสถิติ) และมี<strong>สิทธิ์ป้องกันการพลาดฟรี 1 ครั้ง</strong>ต่อรอบการสอบ!
+            </p>
+          </div>
+          <button onclick="resetAllPromotions()" class="shrink-0 px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs font-semibold text-slate-200 transition">
+            <i class="fa-solid fa-rotate-right mr-1.5 text-pubgGold"></i>รีเซ็ตผลสอบทั้งหมด
+          </button>
+        </div>
+      </div>
+
+      <!-- 3 Interactive Promotion Tier Cards -->
+      <div id="promotionCardsContainer" class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Rendered dynamically via JS -->
+      </div>
+
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 4: ครบทั้ง 6 โหมด & บันทึกรายเกม (6-MODE & MATCH LOGGER)           -->
+    <!-- =================================================================== -->
+    <section id="tab-modes" class="tab-panel hidden space-y-6">
+      
+      <!-- Part A: 6-Mode Overview Table & Visual Chart -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- 6-Mode Table (7 cols) -->
+        <div class="lg:col-span-7 tac-card rounded-2xl p-5 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-layer-group text-pubgGold"></i>
+                <span>ตารางบันทึกและคำนวณครบทั้ง 6 โหมดพร้อมกัน</span>
+              </h2>
+              <p class="text-xs text-slate-400">พิมพ์แก้แต้มในช่องสีเหลืองของแต่ละโหมดได้เลย ข้อมูลซิงค์กับหน้าหลักอัตโนมัติ</p>
+            </div>
+            <button onclick="exportModesCSV()" class="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-semibold transition self-start sm:self-auto">
+              <i class="fa-solid fa-file-csv mr-1"></i>Export CSV (เปิดใน Excel)
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b border-slate-800 text-[11px] text-slate-400 uppercase">
+                  <th class="py-2.5 px-2.5">โหมดการเล่น</th>
+                  <th class="py-2.5 px-2.5 text-center">แต้มปัจจุบัน</th>
+                  <th class="py-2.5 px-2.5">แรงค์ปัจจุบัน</th>
+                  <th class="py-2.5 px-2.5 text-right">ขาดอีก (แต้ม)</th>
+                  <th class="py-2.5 px-2.5">หลังรีแรงค์ซีซั่นใหม่</th>
+                  <th class="py-2.5 px-2.5 text-center">เลือกใช้</th>
+                </tr>
+              </thead>
+              <tbody id="sixModesTableBody" class="divide-y divide-slate-800/60 text-xs sm:text-sm">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 6-Mode Comparison Bar Chart (5 cols) -->
+        <div class="lg:col-span-5 tac-card rounded-2xl p-5 flex flex-col justify-between space-y-4">
+          <div class="border-b border-slate-800 pb-3">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-chart-column text-sky-400"></i>
+              <span>กราฟเปรียบเทียบแต้มปัจจุบัน vs แต้มหลังรีแรงค์ (6 โหมด)</span>
+            </h3>
+            <p class="text-xs text-slate-400">เปรียบเทียบแต้มปัจจุบัน (สีทอง) กับแต้มเริ่มต้นซีซั่นหน้า (สีฟ้า)</p>
+          </div>
+
+          <div id="sixModesChartContainer" class="flex-1 flex flex-col justify-center space-y-3 py-2">
+            <!-- Dynamic Horizontal Bar Chart injected via JS -->
+          </div>
+
+          <div class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800">
+            <div class="flex items-center gap-3">
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-pubgGold inline-block"></span> แต้มปัจจุบัน</span>
+              <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-sm bg-sky-400 inline-block"></span> แต้มหลังรีซีซั่น</span>
+            </div>
+            <span id="highestModeSummary" class="text-amber-300 font-semibold"></span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Part B: Match Logger & Real Performance Analytics -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Quick Match Log Form (4 cols) -->
+        <div class="lg:col-span-4 tac-card tac-border-gold rounded-2xl p-5 space-y-4">
+          <div class="border-b border-slate-800 pb-3">
+            <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-gamepad text-pubgGold"></i>
+              <span>บันทึกผลการเล่นรายเกม (Match Logger)</span>
+            </h3>
+            <p class="text-xs text-slate-400">บันทึกแต้มหลังจบเกมเพื่อคำนวณค่าเฉลี่ยแต้ม/เกมจริง และกราฟพัฒนาการ</p>
+          </div>
+
+          <div class="space-y-3">
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">โหมด</label>
+                <select id="logModeInput" class="w-full bg-obsidian border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white outline-none">
+                  <option value="tpp_squad">TPP Squad</option>
+                  <option value="tpp_duo">TPP Duo</option>
+                  <option value="tpp_solo">TPP Solo</option>
+                  <option value="fpp_squad">FPP Squad</option>
+                  <option value="fpp_duo">FPP Duo</option>
+                  <option value="fpp_solo">FPP Solo</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">แผนที่ (Map)</label>
+                <select id="logMapInput" class="w-full bg-obsidian border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white outline-none">
+                  <option value="Erangel">Erangel</option>
+                  <option value="Miramar">Miramar</option>
+                  <option value="Rondo">Rondo</option>
+                  <option value="Livik">Livik</option>
+                  <option value="Sanhok">Sanhok</option>
+                  <option value="Vikendi">Vikendi</option>
+                  <option value="Karakin">Karakin</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2.5">
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">อันดับ (#)</label>
+                <input id="logPlacementInput" type="number" min="1" max="100" value="1" class="w-full bg-obsidian border border-slate-700 rounded-xl px-3 py-2 font-mono text-sm font-bold text-amber-300 outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">Kills</label>
+                <input id="logKillsInput" type="number" min="0" max="50" value="6" class="w-full bg-obsidian border border-slate-700 rounded-xl px-3 py-2 font-mono text-sm font-bold text-red-400 outline-none" />
+              </div>
+              <div>
+                <label class="block text-xs text-slate-400 mb-1">แต้มที่ได้ (+/-)</label>
+                <input id="logDeltaPtsInput" type="number" min="-100" max="100" value="22" class="w-full bg-obsidian border border-emerald-500/50 rounded-xl px-3 py-2 font-mono text-sm font-bold text-emerald-400 outline-none" />
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">บันทึกย่อ (ถ้ามี)</label>
+              <input id="logNoteInput" type="text" placeholder="เช่น กินไก่เมือง Pochinki / สอบเลื่อนขั้นผ่าน" class="w-full bg-obsidian border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none" />
+            </div>
+
+            <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none pt-1">
+              <input id="logAutoUpdatePts" type="checkbox" checked class="w-4 h-4 rounded accent-amber-500" />
+              <span>บวก/ลบแต้มนี้เข้ากับแต้มปัจจุบันของโหมดที่เลือกทันที</span>
+            </label>
+
+            <button onclick="addMatchLogEntry()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-pubgGold to-amber-600 hover:from-amber-400 hover:to-amber-500 text-obsidian font-bold text-sm shadow-lg shadow-amber-500/20 transition flex items-center justify-center gap-2">
+              <i class="fa-solid fa-plus-circle"></i>
+              <span>บันทึกผลแมตช์นี้</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Match Analytics, Trend Line & History Table (8 cols) -->
+        <div class="lg:col-span-8 tac-card rounded-2xl p-5 space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <h3 class="text-base sm:text-lg font-bold text-white">สถิติการเล่นจริง & กราฟแนวโน้มแต้ม</h3>
+              <p class="text-xs text-slate-400">วิเคราะห์ข้อมูลจากแมตช์ที่คุณบันทึกไว้ทั้งหมดในเครื่อง</p>
+            </div>
+            <div class="flex items-center gap-2">
+              <button onclick="useLoggedAvgPoints()" class="px-3 py-1.5 rounded-lg bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 text-sky-300 text-xs font-medium transition">
+                <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>นำค่าเฉลี่ยจริงไปใช้คำนวณ
+              </button>
+              <button onclick="clearMatchLogs()" class="px-3 py-1.5 rounded-lg bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-300 text-xs font-medium transition">
+                <i class="fa-solid fa-trash-can mr-1"></i>ล้างประวัติ
+              </button>
+            </div>
+          </div>
+
+          <!-- 4 Analytics Stat Boxes -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3">
+              <div class="text-[11px] text-slate-400">แมตช์ที่บันทึก</div>
+              <div id="statTotalMatches" class="font-mono text-lg font-bold text-white">0 เกม</div>
+              <div id="statTop10Rate" class="text-[10px] text-emerald-400">Top 10: 0%</div>
+            </div>
+            <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3">
+              <div class="text-[11px] text-slate-400">แต้มสุทธิรวม</div>
+              <div id="statNetPoints" class="font-mono text-lg font-bold text-emerald-400">+0</div>
+              <div class="text-[10px] text-slate-400">จากแมตช์ที่บันทึก</div>
+            </div>
+            <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3">
+              <div class="text-[11px] text-slate-400">ค่าเฉลี่ยแต้มจริง / เกม</div>
+              <div id="statAvgDelta" class="font-mono text-lg font-bold text-pubgGold">+0.0</div>
+              <div class="text-[10px] text-slate-400">แต้มต่อแมตช์</div>
+            </div>
+            <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3">
+              <div class="text-[11px] text-slate-400">Kills เฉลี่ย / เกม</div>
+              <div id="statAvgKills" class="font-mono text-lg font-bold text-red-400">0.0</div>
+              <div id="statTotalWins" class="text-[10px] text-amber-300">กินไก่ (#1): 0 ครั้ง</div>
+            </div>
+          </div>
+
+          <!-- SVG Point Progression Line Chart -->
+          <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3">
+            <div class="text-xs text-slate-400 mb-2 flex items-center justify-between">
+              <span>กราฟการเปลี่ยนแปลงแต้มรายแมตช์ (ล่าสุด 15 เกม)</span>
+              <span class="font-mono text-[11px] text-pubgGold">Points Trend</span>
+            </div>
+            <div id="matchTrendSvgContainer" class="w-full h-32">
+              <!-- SVG Injected via JS -->
+            </div>
+          </div>
+
+          <!-- Match History Table -->
+          <div class="overflow-x-auto max-h-60">
+            <table class="w-full text-left border-collapse">
+              <thead class="sticky top-0 bg-slate-900">
+                <tr class="border-b border-slate-800 text-[11px] text-slate-400 uppercase">
+                  <th class="py-2 px-2.5">เวลา</th>
+                  <th class="py-2 px-2.5">โหมด / แผนที่</th>
+                  <th class="py-2 px-2.5 text-center">อันดับ</th>
+                  <th class="py-2 px-2.5 text-center">Kills</th>
+                  <th class="py-2 px-2.5 text-right">แต้ม (+/-)</th>
+                  <th class="py-2 px-2.5">หมายเหตุ</th>
+                  <th class="py-2 px-2.5 text-center">ลบ</th>
+                </tr>
+              </thead>
+              <tbody id="matchLogTableBody" class="divide-y divide-slate-800/60 text-xs">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 5: ตารางเกณฑ์อ้างอิง & ตั้งค่าระยะยาว (REFERENCE & SETTINGS)        -->
+    <!-- =================================================================== -->
+    <section id="tab-settings" class="tab-panel hidden space-y-6">
+      
+      <!-- Future-Proof Settings & Backup Panel -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        <!-- Season & Timer Config (6 cols) -->
+        <div class="lg:col-span-6 tac-card tac-border-gold rounded-2xl p-5 space-y-4">
+          <div class="border-b border-slate-800 pb-3">
+            <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-sliders text-pubgGold"></i>
+              <span>ตั้งค่าซีซั่นและเวลาเซิร์ฟเวอร์ (ใช้ยาวๆ ไม่ต้องแก้โค้ด)</span>
+            </h2>
+            <p class="text-xs text-slate-400">เมื่อขึ้นซีซั่นใหม่ในปีถัดๆ ไป คุณสามารถเปลี่ยนชื่อซีซั่นและวันรีแรงค์ได้จากตรงนี้ทันที</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">ป้ายชื่อซีซั่นปัจจุบัน</label>
+              <input id="settingSeasonName" type="text" value="C11S33 • 2026" oninput="saveCustomSettings()" class="w-full bg-obsidian border border-slate-700 focus:border-pubgGold rounded-xl px-3.5 py-2 text-sm font-bold text-white outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">เวลารีเซ็ตอันดับ Conqueror รายวัน</label>
+              <input id="settingDailyResetTime" type="time" value="07:20" oninput="saveCustomSettings()" class="w-full bg-obsidian border border-slate-700 focus:border-pubgGold rounded-xl px-3.5 py-2 font-mono text-sm font-bold text-red-400 outline-none" />
+              <span class="text-[10px] text-slate-400">เวลาไทย (ปกติ 07:00 หรือ 07:20 น.)</span>
+            </div>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">วันและเวลารีแรงค์จบซีซั่น</label>
+              <input id="settingSeasonEndDate" type="datetime-local" oninput="saveCustomSettings()" class="w-full bg-obsidian border border-slate-700 focus:border-pubgGold rounded-xl px-3.5 py-2 font-mono text-sm font-bold text-pubgGold outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">ปรับชดเชยแต้มหลังรีแรงค์ (Offset)</label>
+              <input id="settingResetOffset" type="number" step="50" value="0" oninput="saveCustomSettings()" class="w-full bg-obsidian border border-slate-700 focus:border-sky-400 rounded-xl px-3.5 py-2 font-mono text-sm font-bold text-sky-400 outline-none" />
+              <span class="text-[10px] text-slate-400">ใส่ 0 = มาตรฐาน (ปรับ +100/-100 ได้ถ้าอนาคตเกมเปลี่ยนเกณฑ์)</span>
+            </div>
+          </div>
+
+          <!-- Quick Season End Presets -->
+          <div class="pt-2 border-t border-slate-800 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <span class="text-slate-400">ตั้งวันจบซีซั่นด่วน:</span>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="setSeasonDaysFromNow(14)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition">+14 วัน</button>
+              <button onclick="setSeasonDaysFromNow(30)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition">+30 วัน</button>
+              <button onclick="setSeasonDaysFromNow(60)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-500/30 transition">+60 วัน (เริ่มซีซั่นใหม่)</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Backup, Restore & GitHub Pages Guide (6 cols) -->
+        <div class="lg:col-span-6 tac-card rounded-2xl p-5 flex flex-col justify-between space-y-4">
+          <div class="space-y-3">
+            <div class="border-b border-slate-800 pb-3">
+              <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-database text-emerald-400"></i>
+                <span>จัดการข้อมูล สำรองไฟล์ (JSON/CSV) & GitHub Pages</span>
+              </h2>
+              <p class="text-xs text-slate-400">ข้อมูลทั้งหมดถูกบันทึกไว้ในเบราว์เซอร์ (`localStorage`) และสามารถส่งออกเก็บเป็นไฟล์ได้</p>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <button onclick="exportFullBackupJSON()" class="p-3 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-left transition flex items-center gap-3">
+                <i class="fa-solid fa-download text-xl text-emerald-400"></i>
+                <div>
+                  <div class="text-xs font-bold text-white">สำรองข้อมูลทั้งหมด (.JSON)</div>
+                  <div class="text-[11px] text-slate-400">เก็บแต้ม 6 โหมด ประวัติ & ตั้งค่า</div>
+                </div>
+              </button>
+
+              <label class="p-3 rounded-xl bg-sky-500/15 hover:bg-sky-500/25 border border-sky-500/30 text-left transition flex items-center gap-3 cursor-pointer">
+                <i class="fa-solid fa-upload text-xl text-sky-400"></i>
+                <div>
+                  <div class="text-xs font-bold text-white">กู้คืนข้อมูลจากไฟล์ (.JSON)</div>
+                  <div class="text-[11px] text-slate-400">นำเข้าข้อมูลที่เคยสำรองไว้</div>
+                </div>
+                <input type="file" accept=".json" onchange="importFullBackupJSON(event)" class="hidden" />
+              </label>
+
+              <button onclick="exportModesCSV()" class="p-3 rounded-xl bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-left transition flex items-center gap-3">
+                <i class="fa-solid fa-file-excel text-xl text-pubgGold"></i>
+                <div>
+                  <div class="text-xs font-bold text-white">ส่งออกตารางเปิดใน Excel (.CSV)</div>
+                  <div class="text-[11px] text-slate-400">รองรับภาษาไทย 100%</div>
+                </div>
+              </button>
+
+              <button onclick="confirmResetAllData()" class="p-3 rounded-xl bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-left transition flex items-center gap-3">
+                <i class="fa-solid fa-rotate-left text-xl text-conqRed"></i>
+                <div>
+                  <div class="text-xs font-bold text-white">รีเซ็ตกลับเป็นค่าเริ่มต้น</div>
+                  <div class="text-[11px] text-slate-400">ล้างข้อมูลที่แก้ไขทั้งหมด</div>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 text-xs text-slate-300 space-y-1">
+            <div class="font-bold text-pubgGold flex items-center gap-1.5">
+              <i class="fa-brands fa-github text-base"></i>
+              <span>วิธีนำขึ้น GitHub Pages ของคุณ:</span>
+            </div>
+            <p class="text-[11px] text-slate-400 leading-relaxed">
+              บันทึกโค้ดหน้านี้เป็นไฟล์ชื่อ <code class="text-amber-300 font-mono">index.html</code> แล้วอัปโหลดเข้า Repository บน GitHub จากนั้นไปที่ <strong>Settings &rarr; Pages &rarr; เลือก Branch main</strong> เพียงเท่านี้คุณก็จะมีเว็บคำนวณแรงค์ส่วนตัวไว้ใช้งานได้ตลอดไปครับ!
+            </p>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Full Reference Table (Bronze V to Conqueror) -->
+      <div class="tac-card rounded-2xl p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-table-list text-pubgGold"></i>
+              <span>ตารางฐานข้อมูลเกณฑ์แต้มแรงค์ & การรีแรงค์ PUBG MOBILE ฉบับสมบูรณ์ (2026)</span>
+            </h3>
+            <p class="text-xs text-slate-400">ครอบคลุมตั้งแต่ Bronze V (1,000 แต้ม) จนถึง Ace Dominator 25★+ และ Conqueror</p>
+          </div>
+          <div class="relative w-full sm:w-64">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input
+              id="refSearchInput"
+              type="text"
+              placeholder="ค้นหาชื่อแรงค์ หรือ แต้ม เช่น 4200, Crown..."
+              oninput="renderReferenceTable()"
+              class="w-full bg-obsidian border border-slate-700 focus:border-pubgGold rounded-xl pl-8 pr-3 py-1.5 text-xs text-white outline-none"
+            />
+          </div>
+        </div>
+
+        <div class="overflow-x-auto max-h-[520px]">
+          <table class="w-full text-left border-collapse">
+            <thead class="sticky top-0 bg-slate-900 z-10">
+              <tr class="border-b border-slate-800 text-[11px] text-slate-400 uppercase">
+                <th class="py-2.5 px-3">ระดับแรงค์ (Rank Tier)</th>
+                <th class="py-2.5 px-3 text-right">แต้มขั้นต่ำ</th>
+                <th class="py-2.5 px-3 text-right">แต้มสูงสุด</th>
+                <th class="py-2.5 px-3">แรงค์หลังรีซีซั่น (Reset Rank)</th>
+                <th class="py-2.5 px-3 text-right">แต้มเริ่มต้นซีซั่นใหม่</th>
+                <th class="py-2.5 px-3">หมายเหตุ / เงื่อนไขพิเศษ</th>
+                <th class="py-2.5 px-3 text-center">ทดลองคำนวณ</th>
+              </tr>
+            </thead>
+            <tbody id="referenceTableBody" class="divide-y divide-slate-800/60 text-xs sm:text-sm">
+              <!-- Populated via JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/80 bg-obsidian/90 py-5 mt-10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-slate-400">
+      <div class="flex items-center gap-2">
+        <i class="fa-solid fa-shield-halved text-pubgGold"></i>
+        <span><strong>PUBG MOBILE Rank & Reset Calculator (2026 Edition)</strong> — สร้างสำหรับใช้งานบน GitHub Pages</span>
+      </div>
+      <div class="font-mono text-[11px] text-slate-400">
+        รองรับระบบ Promotion Matches (V4.2+) • คำนวณดาว Ace อัตโนมัติไม่จำกัด • Auto-Save LocalStorage
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===================================================================== -->
+  <!-- APPLICATION LOGIC & DATA ENGINE                                       -->
+  <!-- ===================================================================== -->
+  <script>
+    const STORAGE_KEY = 'PUBGM_RANK_HUB_2026_V1';
+
+    // Mode metadata
+    const GAME_MODES = [
+      { id: 'tpp_squad', name: 'TPP Squad', desc: 'มุมมองที่ 3 - ทีม 4 คน', defaultPts: 5720, defaultConq: 5850 },
+      { id: 'tpp_duo',   name: 'TPP Duo',   desc: 'มุมมองที่ 3 - คู่ 2 คน',  defaultPts: 4250, defaultConq: 5150 },
+      { id: 'tpp_solo',  name: 'TPP Solo',  desc: 'มุมมองที่ 3 - ลุยเดี่ยว', defaultPts: 3650, defaultConq: 4850 },
+      { id: 'fpp_squad', name: 'FPP Squad', desc: 'มุมมองที่ 1 - ทีม 4 คน', defaultPts: 3200, defaultConq: 4650 },
+      { id: 'fpp_duo',   name: 'FPP Duo',   desc: 'มุมมองที่ 1 - คู่ 2 คน',  defaultPts: 2500, defaultConq: 4350 },
+      { id: 'fpp_solo',  name: 'FPP Solo',  desc: 'มุมมองที่ 1 - ลุยเดี่ยว', defaultPts: 2000, defaultConq: 4250 }
+    ];
+
+    // Base Rank Reference Table (1,000 to 6,700+)
+    const BASE_RANK_TIERS = [
+      { name: 'Bronze V',   min: 1000, max: 1099, group: 'Bronze',   note: 'แรงค์เริ่มต้น ไม่ลดแรงค์ตอนจบซีซั่น' },
+      { name: 'Bronze IV',  min: 1100, max: 1199, group: 'Bronze',   note: 'คงเดิมหลังรีซีซั่น' },
+      { name: 'Bronze III', min: 1200, max: 1299, group: 'Bronze',   note: 'คงเดิมหลังรีซีซั่น' },
+      { name: 'Bronze II',  min: 1300, max: 1399, group: 'Bronze',   note: 'คงเดิมหลังรีซีซั่น' },
+      { name: 'Bronze I',   min: 1400, max: 1499, group: 'Bronze',   note: 'คงเดิมหลังรีซีซั่น' },
+      { name: 'Silver V',   min: 1500, max: 1599, group: 'Silver',   note: 'คงเดิมหลังรีซีซั่น' },
+      { name: 'Silver IV',  min: 1600, max: 1699, group: 'Silver',   note: 'คงเดิมหลังรีซีซั่น' },
+      { name: 'Silver III', min: 1700, max: 1799, group: 'Silver',   note: 'คงเดิมหลังรีซีซั่น' },
+      { name: 'Silver II',  min: 1800, max: 1899, group: 'Silver',   note: 'คงเดิมหลังรีซีซั่น' },
+      { name: 'Silver I',   min: 1900, max: 1999, group: 'Silver',   note: 'คงเดิมหลังรีซีซั่น' },
+      { name: 'Gold V',     min: 2000, max: 2099, group: 'Gold',     note: 'รีเซ็ตกลับมาที่ Gold V (2,000)' },
+      { name: 'Gold IV',    min: 2100, max: 2199, group: 'Gold',     note: 'รีเซ็ตกลับมาที่ Gold V (2,000)' },
+      { name: 'Gold III',   min: 2200, max: 2299, group: 'Gold',     note: 'รีเซ็ตกลับมาที่ Gold V (2,000)' },
+      { name: 'Gold II',    min: 2300, max: 2399, group: 'Gold',     note: 'รีเซ็ตกลับมาที่ Gold V (2,000)' },
+      { name: 'Gold I',     min: 2400, max: 2499, group: 'Gold',     note: 'รีเซ็ตกลับมาที่ Gold V (2,000)' },
+      { name: 'Platinum V',  min: 2500, max: 2599, group: 'Platinum', note: 'รีเซ็ตเป็น Gold IV (2,100)' },
+      { name: 'Platinum IV', min: 2600, max: 2699, group: 'Platinum', note: 'รีเซ็ตเป็น Gold IV (2,100)' },
+      { name: 'Platinum III',min: 2700, max: 2799, group: 'Platinum', note: 'รีเซ็ตเป็น Gold III (2,200)' },
+      { name: 'Platinum II', min: 2800, max: 2899, group: 'Platinum', note: 'รีเซ็ตเป็น Gold II (2,300)' },
+      { name: 'Platinum I',  min: 2900, max: 2999, group: 'Platinum', note: 'รีเซ็ตเป็น Gold II (2,300)' },
+      { name: 'Diamond V',   min: 3000, max: 3099, group: 'Diamond',  note: 'รีเซ็ตเป็น Gold I (2,400)' },
+      { name: 'Diamond IV',  min: 3100, max: 3199, group: 'Diamond',  note: 'รีเซ็ตเป็น Gold I (2,400)' },
+      { name: 'Diamond III', min: 3200, max: 3299, group: 'Diamond',  note: 'รีเซ็ตเป็น Platinum V (2,500)' },
+      { name: 'Diamond II',  min: 3300, max: 3399, group: 'Diamond',  note: 'รีเซ็ตเป็น Platinum V (2,500)' },
+      { name: 'Diamond I',   min: 3400, max: 3499, group: 'Diamond',  note: 'รีเซ็ตเป็น Platinum IV (2,600)' },
+      { name: 'Crown V',     min: 3500, max: 3599, group: 'Crown',    note: 'รีเซ็ตเป็น Platinum IV (2,600)' },
+      { name: 'Crown IV',    min: 3600, max: 3699, group: 'Crown',    note: 'รีเซ็ตเป็น Platinum III (2,700)' },
+      { name: 'Crown III',   min: 3700, max: 3799, group: 'Crown',    note: 'รีเซ็ตเป็น Platinum III (2,700)' },
+      { name: 'Crown II',    min: 3800, max: 3899, group: 'Crown',    note: 'รีเซ็ตเป็น Platinum II (2,800)' },
+      { name: 'Crown I',     min: 3900, max: 4199, group: 'Crown',    note: 'ช่วงกว้าง 300 แต้มก่อนขึ้น Ace (รีเป็น Platinum II 2,800)' }
+    ];
+
+    // Generate reference rows up to Ace Dominator 25★
+    function getFullReferenceList() {
+      const list = [...BASE_RANK_TIERS];
+      for (let star = 0; star <= 25; star++) {
+        const min = 4200 + star * 100;
+        const max = star === 25 ? 9999 : min + 99;
+        let group = 'Ace';
+        let name = `Ace (${star}★)`;
+        let note = 'ทุกๆ 100 แต้ม = +1 ดาว';
+
+        if (star === 0) {
+          note = 'ปลดล็อก Ace! (ปี 2026: สอบ Erangel Top 15 / Livik Top 8 ติดกัน 3 เกม)';
+        } else if (star >= 5 && star < 10) {
+          group = 'Ace Master';
+          name = `Ace Master (${star}★)`;
+          if (star === 5) note = 'ปลดล็อก Ace Master! (สอบ Erangel Top 12 / Livik Top 6 ติดกัน 4 เกม)';
+        } else if (star >= 10) {
+          group = 'Ace Dominator';
+          name = star === 25 ? `Ace Dominator (25★+)` : `Ace Dominator (${star}★)`;
+          if (star === 10) note = 'ปลดล็อก Ace Dominator! สิทธิ์ลุ้นติด Top 500 Conqueror';
+          if (star === 11) note = 'แต้ม 5,300+ ได้เพดานรีแรงค์สูงสุด: Diamond IV (3,100 แต้ม)';
+        }
+        list.push({ name, min, max, group, note });
+      }
+      return list;
+    }
+
+    // Default Application State
+    function getDefaultState() {
+      // Default season end date: 45 days from now
+      const futureDate = new Date(Date.now() + 45 * 24 * 60 * 60 * 1000);
+      const isoLocal = new Date(futureDate.getTime() - futureDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
+      return {
+        activeMode: 'tpp_squad',
+        avgPtsPerMatch: 15,
+        previousPointsSnapshot: null,
+        modes: {
+          tpp_squad: { points: 5720, conqThreshold: 5850 },
+          tpp_duo:   { points: 4250, conqThreshold: 5150 },
+          tpp_solo:  { points: 3650, conqThreshold: 4850 },
+          fpp_squad: { points: 3200, conqThreshold: 4650 },
+          fpp_duo:   { points: 2500, conqThreshold: 4350 },
+          fpp_solo:  { points: 2000, conqThreshold: 4250 }
+        },
+        planner: {
+          currentPts: 5720,
+          serverCutoff: 5850,
+          dailyInflation: 25,
+          targetDays: 3,
+          avgPtsPerMatch: 15,
+          avgMatchMinutes: 24,
+          safetyBuffer: 20,
+          protectionCards: 3,
+          completedDays: {}
+        },
+        promotions: {
+          ace: {
+            title: 'Ace Promotion',
+            reqPts: 4200,
+            reqStreak: 3,
+            erangelTop: 15,
+            livikTop: 8,
+            selectedMap: 'Erangel',
+            history: ['pass', 'pass'], // sample progress
+            protectionUsed: false,
+            promoted: true
+          },
+          master: {
+            title: 'Ace Master Promotion',
+            reqPts: 4700,
+            reqStreak: 4,
+            erangelTop: 12,
+            livikTop: 6,
+            selectedMap: 'Erangel',
+            history: ['pass', 'pass', 'pass'],
+            protectionUsed: false,
+            promoted: true
+          },
+          dominator: {
+            title: 'Ace Dominator Promotion',
+            reqPts: 5200,
+            reqStreak: 5,
+            erangelTop: 10,
+            livikTop: 5,
+            selectedMap: 'Erangel',
+            history: ['pass', 'pass', 'fail', 'pass'],
+            protectionUsed: true,
+            promoted: false
+          }
+        },
+        matchLogs: [
+          { id: 1, time: 'เมื่อวาน 21:15', mode: 'tpp_squad', map: 'Erangel', placement: 1, kills: 8, delta: 28, note: 'กินไก่วงสุดท้ายสวยๆ' },
+          { id: 2, time: 'เมื่อวาน 21:48', mode: 'tpp_squad', map: 'Miramar', placement: 4, kills: 5, delta: 16, note: 'ติด Top 5' },
+          { id: 3, time: 'เมื่อวาน 22:20', mode: 'tpp_squad', map: 'Erangel', placement: 2, kills: 6, delta: 21, note: 'เกือบแชมป์' },
+          { id: 4, time: 'วันนี้ 19:30',   mode: 'tpp_squad', map: 'Rondo',   placement: 12, kills: 2, delta: 5,  note: 'โดนดักสะพาน' },
+          { id: 5, time: 'วันนี้ 20:05',   mode: 'tpp_squad', map: 'Erangel', placement: 1, kills: 9, delta: 30, note: 'แชมป์พร้อมคิลจุกๆ' }
+        ],
+        settings: {
+          seasonName: 'C11S33 • 2026',
+          dailyResetTime: '07:20',
+          seasonEndDate: isoLocal,
+          resetOffset: 0
+        }
+      };
+    }
+
+    let appState = loadState();
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return getDefaultState();
+        const parsed = JSON.parse(raw);
+        const def = getDefaultState();
+        return {
+          ...def,
+          ...parsed,
+          modes: { ...def.modes, ...(parsed.modes || {}) },
+          planner: { ...def.planner, ...(parsed.planner || {}) },
+          promotions: { ...def.promotions, ...(parsed.promotions || {}) },
+          settings: { ...def.settings, ...(parsed.settings || {}) },
+          matchLogs: Array.isArray(parsed.matchLogs) ? parsed.matchLogs : def.matchLogs
+        };
+      } catch (e) {
+        return getDefaultState();
+      }
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {
+        console.error('Failed to save state:', e);
+      }
+    }
+
+    // =====================================================================
+    // CORE RANK & SEASON RESET CALCULATION ENGINE
+    // =====================================================================
+    function evaluateRank(points, conqThreshold = 5850) {
+      const pts = Math.max(1000, Math.floor(Number(points) || 1000));
+      const effectiveConqCutoff = Math.max(5200, Math.floor(Number(conqThreshold) || 5850));
+
+      let rankName = 'Bronze V';
+      let tierGroup = 'Bronze';
+      let stars = 0;
+      let starLabel = 'ไม่มีดาว';
+      let currentMin = 1000;
+      let nextTargetPts = 1100;
+      let nextRankName = 'Bronze IV';
+
+      if (pts < 4200) {
+        for (let i = 0; i < BASE_RANK_TIERS.length; i++) {
+          const t = BASE_RANK_TIERS[i];
+          if (pts >= t.min && pts <= t.max) {
+            rankName = t.name;
+            tierGroup = t.group;
+            currentMin = t.min;
+            nextTargetPts = t.max + 1;
+            nextRankName = i + 1 < BASE_RANK_TIERS.length ? BASE_RANK_TIERS[i + 1].name : 'Ace (0★)';
+            break;
+          }
+        }
+      } else {
+        stars = Math.floor((pts - 4200) / 100);
+        currentMin = 4200 + stars * 100;
+        nextTargetPts = currentMin + 100;
+
+        if (stars < 5) {
+          tierGroup = 'Ace';
+          rankName = `Ace (${stars}★)`;
+          starLabel = `★ ${stars} ดาว (Ace)`;
+        } else if (stars < 10) {
+          tierGroup = 'Ace Master';
+          rankName = `Ace Master (${stars}★)`;
+          starLabel = `★ ${stars} ดาว (Master)`;
+        } else {
+          tierGroup = 'Ace Dominator';
+          rankName = `Ace Dominator (${stars}★)`;
+          starLabel = `★ ${stars} ดาว (Dominator)`;
+        }
+
+        const nextStar = stars + 1;
+        if (nextStar < 5) nextRankName = `Ace (${nextStar}★)`;
+        else if (nextStar < 10) nextRankName = `Ace Master (${nextStar}★)`;
+        else nextRankName = `Ace Dominator (${nextStar}★)`;
+      }
+
+      const span = Math.max(1, nextTargetPts - currentMin);
+      const progressPct = Math.min(100, Math.max(0, Math.round(((pts - currentMin) / span) * 100)));
+      const ptsNeededNext = Math.max(0, nextTargetPts - pts);
+      const isConquerorEligible = pts >= effectiveConqCutoff && pts >= 5200;
+      const ptsToConqueror = Math.max(0, effectiveConqCutoff - pts);
+
+      return {
+        points: pts,
+        rankName,
+        tierGroup,
+        stars,
+        starLabel,
+        currentMin,
+        nextTargetPts,
+        nextRankName,
+        progressPct,
+        ptsNeededNext,
+        effectiveConqCutoff,
+        isConquerorEligible,
+        ptsToConqueror
+      };
+    }
+
+    // Official PUBG Mobile Season Reset Engine
+    function evaluateSeasonReset(points) {
+      const pts = Math.max(1000, Math.floor(Number(points) || 1000));
+      const offset = Number(appState.settings.resetOffset) || 0;
+
+      let baseResetPts = 2000;
+      let nextResetBracketPts = null;
+      let nextResetRankName = null;
+
+      if (pts < 2000) {
+        baseResetPts = pts;
+        nextResetBracketPts = 2000;
+        nextResetRankName = 'Gold V (2,000)';
+      } else if (pts <= 2499) {
+        baseResetPts = 2000;
+        nextResetBracketPts = 2500;
+        nextResetRankName = 'Gold IV (2,100)';
+      } else if (pts <= 2699) {
+        baseResetPts = 2100;
+        nextResetBracketPts = 2700;
+        nextResetRankName = 'Gold III (2,200)';
+      } else if (pts <= 2799) {
+        baseResetPts = 2200;
+        nextResetBracketPts = 2800;
+        nextResetRankName = 'Gold II (2,300)';
+      } else if (pts <= 2999) {
+        baseResetPts = 2300;
+        nextResetBracketPts = 3000;
+        nextResetRankName = 'Gold I (2,400)';
+      } else if (pts <= 3199) {
+        baseResetPts = 2400;
+        nextResetBracketPts = 3200;
+        nextResetRankName = 'Platinum V (2,500)';
+      } else if (pts <= 3399) {
+        baseResetPts = 2500;
+        nextResetBracketPts = 3400;
+        nextResetRankName = 'Platinum IV (2,600)';
+      } else if (pts <= 3599) {
+        baseResetPts = 2600;
+        nextResetBracketPts = 3600;
+        nextResetRankName = 'Platinum III (2,700)';
+      } else if (pts <= 3799) {
+        baseResetPts = 2700;
+        nextResetBracketPts = 3800;
+        nextResetRankName = 'Platinum II (2,800)';
+      } else if (pts <= 4199) {
+        baseResetPts = 2800;
+        nextResetBracketPts = 4200;
+        nextResetRankName = 'Platinum I (2,900)';
+      } else if (pts <= 4799) {
+        baseResetPts = 2900;
+        nextResetBracketPts = 4800;
+        nextResetRankName = 'Diamond V (3,000)';
+      } else if (pts <= 5299) {
+        baseResetPts = 3000;
+        nextResetBracketPts = 5300;
+        nextResetRankName = 'Diamond IV (3,100)';
+      } else {
+        baseResetPts = 3100;
+        nextResetBracketPts = null;
+        nextResetRankName = null;
+      }
+
+      const finalResetPts = Math.max(1000, baseResetPts + offset);
+      const resetRankEval = evaluateRank(finalResetPts);
+      const droppedPts = Math.max(0, pts - finalResetPts);
+      const dropPct = pts > 0 ? ((droppedPts / pts) * 100).toFixed(1) : '0.0';
+
+      return {
+        resetPoints: finalResetPts,
+        resetRankName: resetRankEval.rankName,
+        resetTierGroup: resetRankEval.tierGroup,
+        droppedPts,
+        dropPct,
+        nextResetBracketPts,
+        nextResetRankName
+      };
+    }
+
+    // Dynamic SVG Emblem Generator for Every Tier
+    function getRankEmblemSVG(tierGroup, stars = 0, isConq = false) {
+      if (isConq) {
+        return `
+          <svg viewBox="0 0 120 120" class="w-full h-full">
+            <defs>
+              <linearGradient id="conqGrad" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#EF4444"/>
+                <stop offset="50%" stop-color="#F59E0B"/>
+                <stop offset="100%" stop-color="#991B1B"/>
+              </linearGradient>
+            </defs>
+            <polygon points="60,6 108,30 96,94 60,114 24,94 12,30" fill="url(#conqGrad)" stroke="#FEF08A" stroke-width="3"/>
+            <polygon points="60,16 96,36 86,86 60,102 34,86 24,36" fill="#450A0A" stroke="#F59E0B" stroke-width="1.5"/>
+            <path d="M35 65 L45 40 L60 55 L75 40 L85 65 Z" fill="#FDE047" stroke="#FFF" stroke-width="1.5"/>
+            <circle cx="60" cy="34" r="5" fill="#EF4444" stroke="#FEF08A" stroke-width="1.5"/>
+            <text x="60" y="85" text-anchor="middle" fill="#FEF08A" font-size="11" font-family="JetBrains Mono" font-weight="800">CONQUEROR</text>
+          </svg>
+        `;
+      }
+
+      const palettes = {
+        'Bronze':        { c1: '#D97706', c2: '#78350F', inner: '#451A03', stroke: '#FBBF24', label: 'BRONZE' },
+        'Silver':        { c1: '#E2E8F0', c2: '#64748B', inner: '#1E293B', stroke: '#F8FAFC', label: 'SILVER' },
+        'Gold':          { c1: '#FACC15', c2: '#CA8A04', inner: '#422006', stroke: '#FEF08A', label: 'GOLD' },
+        'Platinum':      { c1: '#38BDF8', c2: '#0284C7', inner: '#082F49', stroke: '#BAE6FD', label: 'PLATINUM' },
+        'Diamond':       { c1: '#818CF8', c2: '#4F46E5', inner: '#1E1B4B', stroke: '#E0E7FF', label: 'DIAMOND' },
+        'Crown':         { c1: '#F59E0B', c2: '#B45309', inner: '#3B0764', stroke: '#FDE047', label: 'CROWN' },
+        'Ace':           { c1: '#FBBF24', c2: '#D97706', inner: '#451A03', stroke: '#FEF9C3', label: 'ACE' },
+        'Ace Master':    { c1: '#38BDF8', c2: '#F59E0B', inner: '#0F172A', stroke: '#FDE047', label: 'MASTER' },
+        'Ace Dominator': { c1: '#EF4444', c2: '#F59E0B', inner: '#450A0A', stroke: '#FEF08A', label: 'DOMINATOR' }
+      };
+
+      const p = palettes[tierGroup] || palettes['Gold'];
+      const uid = tierGroup.replace(/\s+/g, '');
+      const starBadge = stars > 0 ? `${stars}★` : p.label;
+
+      return `
+        <svg viewBox="0 0 120 120" class="w-full h-full">
+          <defs>
+            <linearGradient id="grad_${uid}" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="${p.c1}"/>
+              <stop offset="100%" stop-color="${p.c2}"/>
+            </linearGradient>
+          </defs>
+          <polygon points="60,8 104,28 92,90 60,112 28,90 16,28" fill="url(#grad_${uid})" stroke="${p.stroke}" stroke-width="2.5"/>
+          <polygon points="60,18 92,34 83,82 60,100 37,82 28,34" fill="${p.inner}" stroke="${p.c1}" stroke-width="1.5"/>
+          <polygon points="60,28 67,44 85,46 71,58 75,75 60,66 45,75 49,58 35,46 53,44" fill="${p.stroke}"/>
+          <text x="60" y="91" text-anchor="middle" fill="${p.stroke}" font-size="11" font-family="JetBrains Mono" font-weight="800">${starBadge}</text>
+        </svg>
+      `;
+    }
+
+    // =====================================================================
+    // TAB 1 UI UPDATES & HANDLERS
+    // =====================================================================
+    function handleActiveModeChange(modeId) {
+      appState.activeMode = modeId;
+      saveState();
+      renderAll();
+      const modeObj = GAME_MODES.find(m => m.id === modeId);
+      showToast(`สลับไปยังโหมด ${modeObj ? modeObj.name : modeId} แล้ว`, 'info');
+    }
+
+    function handlePointsChange(val) {
+      const num = Math.max(1000, Math.min(9999, Math.floor(Number(val) || 1000)));
+      appState.modes[appState.activeMode].points = num;
+      saveState();
+      renderMainCalculator();
+      renderSixModesTab();
+    }
+
+    function adjustPoints(delta) {
+      const current = appState.modes[appState.activeMode].points;
+      appState.previousPointsSnapshot = current;
+      const updated = Math.max(1000, Math.min(9999, current + delta));
+      appState.modes[appState.activeMode].points = updated;
+      document.getElementById('undoPointBtn').classList.remove('hidden');
+      saveState();
+      renderMainCalculator();
+      renderSixModesTab();
+      const sign = delta > 0 ? `+${delta}` : delta;
+      showToast(`ปรับแต้ม ${sign} &rarr; ปัจจุบัน ${updated.toLocaleString()} แต้ม`, delta > 0 ? 'success' : 'warn');
+    }
+
+    function undoLastPointChange() {
+      if (appState.previousPointsSnapshot !== null) {
+        appState.modes[appState.activeMode].points = appState.previousPointsSnapshot;
+        appState.previousPointsSnapshot = null;
+        document.getElementById('undoPointBtn').classList.add('hidden');
+        saveState();
+        renderMainCalculator();
+        renderSixModesTab();
+        showToast('ย้อนกลับแต้มเดิมเรียบร้อยแล้ว', 'info');
+      }
+    }
+
+    function handleConqThresholdChange(val) {
+      const num = Math.max(4200, Math.min(9999, Math.floor(Number(val) || 5200)));
+      appState.modes[appState.activeMode].conqThreshold = num;
+      saveState();
+      renderMainCalculator();
+      renderSixModesTab();
+    }
+
+    function handleAvgPtsChange(val) {
+      const num = Math.max(1, Math.min(100, Number(val) || 15));
+      appState.avgPtsPerMatch = num;
+      saveState();
+      renderMainCalculator();
+    }
+
+    function renderMainCalculator() {
+      const modeId = appState.activeMode;
+      const modeData = appState.modes[modeId] || { points: 5720, conqThreshold: 5850 };
+      const modeMeta = GAME_MODES.find(m => m.id === modeId) || GAME_MODES[0];
+      const avgPts = Math.max(1, Number(appState.avgPtsPerMatch) || 15);
+
+      // Sync inputs
+      document.getElementById('activeModeSelect').value = modeId;
+      document.getElementById('activeModeBadge').textContent = modeMeta.name;
+      document.getElementById('currentPointsInput').value = modeData.points;
+      document.getElementById('currentPointsSlider').value = Math.min(8000, modeData.points);
+      document.getElementById('conqThresholdInput').value = modeData.conqThreshold;
+      document.getElementById('avgPtsPerMatchInput').value = avgPts;
+
+      const rankEval = evaluateRank(modeData.points, modeData.conqThreshold);
+      const resetEval = evaluateSeasonReset(modeData.points);
+
+      // Emblem & Rank Title
+      document.getElementById('rankEmblemContainer').innerHTML = getRankEmblemSVG(
+        rankEval.tierGroup,
+        rankEval.stars,
+        rankEval.isConquerorEligible
+      );
+
+      const titleEl = document.getElementById('currentRankTitle');
+      titleEl.textContent = rankEval.isConquerorEligible
+        ? `Conqueror (${rankEval.stars}★)`
+        : rankEval.rankName;
+
+      document.getElementById('currentStarVisual').textContent = rankEval.starLabel;
+      document.getElementById('nextRankName').textContent = rankEval.nextRankName;
+      document.getElementById('nextRankTargetPts').textContent = `${rankEval.nextTargetPts.toLocaleString()} แต้ม`;
+      document.getElementById('nextRankProgressBar').style.width = `${rankEval.progressPct}%`;
+      document.getElementById('ptsNeededNext').textContent = rankEval.ptsNeededNext.toLocaleString();
+      document.getElementById('matchesNeededNext').textContent = Math.ceil(rankEval.ptsNeededNext / avgPts).toLocaleString();
+
+      // 2026 Promotion Eligibility Alert
+      const promoDescEl = document.getElementById('promoAlertDesc');
+      if (rankEval.points < 4200) {
+        const diff = 4200 - rankEval.points;
+        promoDescEl.innerHTML = `อีก <strong>${diff.toLocaleString()} แต้ม</strong> จะถึงเกณฑ์สอบเลื่อนขั้น <strong>Ace (4,200)</strong>: ต้องติด Top 15 (Erangel) หรือ Top 8 (Livik) 3 เกมติดกัน`;
+      } else if (rankEval.points < 4700) {
+        const diff = 4700 - rankEval.points;
+        promoDescEl.innerHTML = `ถึงเกณฑ์สอบ <strong>Ace</strong> แล้ว! อีก <strong>${diff.toLocaleString()} แต้ม</strong> จะถึงเกณฑ์สอบ <strong>Ace Master (4,700)</strong> (Erangel Top 12 / Livik Top 6 ติดกัน 4 เกม)`;
+      } else if (rankEval.points < 5200) {
+        const diff = 5200 - rankEval.points;
+        promoDescEl.innerHTML = `ถึงเกณฑ์สอบ <strong>Ace Master</strong> แล้ว! อีก <strong>${diff.toLocaleString()} แต้ม</strong> จะถึงเกณฑ์สอบ <strong>Ace Dominator (5,200)</strong> (Erangel Top 10 / Livik Top 5 ติดกัน 5 เกม)`;
+      } else {
+        promoDescEl.innerHTML = `แต้มผ่านเกณฑ์สูงสุด <strong>Ace Dominator (5,200+)</strong> เรียบร้อย! สอบผ่าน 5 เกมติดเพื่อปลดล็อกสิทธิ์ลุ้นป้ายแดง Conqueror`;
+      }
+
+      // Conqueror Status Banner
+      const conqBanner = document.getElementById('conquerorStatusBanner');
+      if (rankEval.isConquerorEligible) {
+        conqBanner.className = 'rounded-xl p-3.5 border bg-emerald-500/15 border-emerald-500/40 text-emerald-200';
+        conqBanner.innerHTML = `
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center text-emerald-300 shrink-0">
+              <i class="fa-solid fa-crown text-lg"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-white uppercase tracking-wide">ผ่านเกณฑ์ลุ้นป้ายแดง CONQUEROR!</div>
+              <div class="text-xs text-emerald-300 mt-0.5">
+                แต้มของคุณสูงกว่าเกณฑ์ Top 500 (${rankEval.effectiveConqCutoff.toLocaleString()}) อยู่ <strong>+${(rankEval.points - rankEval.effectiveConqCutoff).toLocaleString()} แต้ม</strong> รอรับป้ายตอนรีเซ็ต ${appState.settings.dailyResetTime} น.
+              </div>
+            </div>
+          </div>
+        `;
+      } else {
+        const matchesToConq = Math.ceil(rankEval.ptsToConqueror / avgPts);
+        conqBanner.className = 'rounded-xl p-3.5 border bg-red-500/10 border-red-500/35 text-red-200';
+        conqBanner.innerHTML = `
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-xl bg-red-500/20 border border-red-500/40 flex items-center justify-center text-conqRed shrink-0">
+                <i class="fa-solid fa-fire text-base"></i>
+              </div>
+              <div>
+                <div class="text-xs text-slate-300">ระยะห่างจาก <strong class="text-red-400">Conqueror (${rankEval.effectiveConqCutoff.toLocaleString()})</strong></div>
+                <div class="text-xs text-slate-400">ขาดอีก <strong class="text-white font-mono">${rankEval.ptsToConqueror.toLocaleString()}</strong> แต้ม (~<strong class="text-amber-300 font-mono">${matchesToConq}</strong> เกม)</div>
+              </div>
+            </div>
+            <button onclick="switchTab('tab-planner')" class="shrink-0 px-2.5 py-1.5 rounded-lg bg-conqRed hover:bg-red-600 text-white text-xs font-semibold transition">
+              วางแผนดัน
+            </button>
+          </div>
+        `;
+      }
+
+      // Post-Reset Simulation Card
+      document.getElementById('resetEmblemContainer').innerHTML = getRankEmblemSVG(resetEval.resetTierGroup, 0, false);
+      document.getElementById('postResetRankName').textContent = resetEval.resetRankName;
+      document.getElementById('postResetPoints').textContent = `${resetEval.resetPoints.toLocaleString()} แต้ม`;
+      document.getElementById('pointsDroppedOnReset').textContent = resetEval.droppedPts > 0 ? `-${resetEval.droppedPts.toLocaleString()} แต้ม` : 'ไม่ลดแต้ม';
+      document.getElementById('pointsDropPercent').textContent = `ลดลง ${resetEval.dropPct}% จากแต้มเดิม`;
+
+      if (resetEval.nextResetBracketPts) {
+        const needForBetterReset = resetEval.nextResetBracketPts - rankEval.points;
+        document.getElementById('ptsToMaxResetBracket').textContent = `อีก +${needForBetterReset.toLocaleString()} แต้ม`;
+        document.getElementById('maxResetBracketHint').textContent = `ถึง ${resetEval.nextResetBracketPts.toLocaleString()} จะรีได้ ${resetEval.nextResetRankName}`;
+      } else {
+        document.getElementById('ptsToMaxResetBracket').textContent = 'สูงสุดแล้ว!';
+        document.getElementById('maxResetBracketHint').textContent = 'เพดานสูงสุด 5,300+ เริ่มที่ 3,100 แต้ม';
+      }
+
+      // Climb back metrics in new season
+      const toAce = Math.max(0, 4200 - resetEval.resetPoints);
+      const toMaster = Math.max(0, 4700 - resetEval.resetPoints);
+      const toDom = Math.max(0, 5200 - resetEval.resetPoints);
+
+      document.getElementById('newSeasonToAcePts').textContent = `+${toAce.toLocaleString()} แต้ม`;
+      document.getElementById('newSeasonToAceMatches').textContent = Math.ceil(toAce / avgPts).toLocaleString();
+      document.getElementById('newSeasonToMasterPts').textContent = `+${toMaster.toLocaleString()} แต้ม`;
+      document.getElementById('newSeasonToMasterMatches').textContent = Math.ceil(toMaster / avgPts).toLocaleString();
+      document.getElementById('newSeasonToDomPts').textContent = `+${toDom.toLocaleString()} แต้ม`;
+      document.getElementById('newSeasonToDomMatches').textContent = Math.ceil(toDom / avgPts).toLocaleString();
+
+      // Render Milestone Table
+      renderMilestoneTable(rankEval.points, rankEval.effectiveConqCutoff, avgPts);
+    }
+
+    function renderMilestoneTable(currentPts, conqCutoff, avgPts) {
+      const milestones = [
+        { name: 'Gold V',               target: 2000, rule: 'ปลดล็อกของรางวัลชุดเซ็ตประจำซีซั่น' },
+        { name: 'Platinum V',           target: 2500, rule: 'ระดับกลาง เริ่มเจอผู้เล่นตึงมือขึ้น' },
+        { name: 'Diamond V',            target: 3000, rule: 'ปลดล็อกสกินปืนประจำซีซั่น' },
+        { name: 'Crown V',              target: 3500, rule: 'มีสิทธิ์ใช้บัตรป้องกันแรงค์ระดับสูง' },
+        { name: 'Ace (0★)',             target: 4200, rule: 'สอบเลื่อนขั้น: Erangel Top 15 / Livik Top 8 (3 เกมติด)' },
+        { name: 'Ace Master (5★)',      target: 4700, rule: 'สอบเลื่อนขั้น: Erangel Top 12 / Livik Top 6 (4 เกมติด)' },
+        { name: 'Ace Dominator (10★)',  target: 5200, rule: 'สอบเลื่อนขั้น: Erangel Top 10 / Livik Top 5 (5 เกมติด)' },
+        { name: 'Ace Dominator (11★+)', target: 5300, rule: 'เพดานรีแรงค์ซีซั่นหน้าสูงสุด: Diamond IV (3,100 แต้ม)' },
+        { name: 'Ace Dominator (15★)',  target: 5700, rule: 'ฐานแต้มเกาะกลุ่มลุ้น Top 500 กลางซีซั่น' },
+        { name: 'Conqueror (Top 500)',  target: conqCutoff, rule: `ติด Top 500 เซิร์ฟเวอร์ ก่อนรีเซ็ต ${appState.settings.dailyResetTime} น.` }
+      ];
+
+      const tbody = document.getElementById('milestoneTableBody');
+      tbody.innerHTML = milestones.map(m => {
+        const reached = currentPts >= m.target;
+        const diff = m.target - currentPts;
+        const matches = reached ? 0 : Math.ceil(diff / avgPts);
+        const resetSim = evaluateSeasonReset(m.target);
+
+        return `
+          <tr class="hover:bg-slate-800/40 transition ${reached ? 'bg-emerald-950/10' : ''}">
+            <td class="py-2.5 px-3 font-bold ${m.name.includes('Conqueror') ? 'text-conqRed' : 'text-white'}">
+              ${m.name}
+            </td>
+            <td class="py-2.5 px-3 text-right font-mono font-semibold text-pubgGold">
+              ${m.target.toLocaleString()}
+            </td>
+            <td class="py-2.5 px-3 text-center">
+              ${reached
+                ? `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"><i class="fa-solid fa-check mr-1"></i>ผ่านแล้ว</span>`
+                : `<span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-amber-500/15 text-amber-300 border border-amber-500/30">ขาดอีก ${diff.toLocaleString()}</span>`
+              }
+            </td>
+            <td class="py-2.5 px-3 text-right font-mono ${reached ? 'text-emerald-400' : 'text-red-400'}">
+              ${reached ? `+${Math.abs(diff).toLocaleString()} (เกินเกณฑ์)` : `-${diff.toLocaleString()} แต้ม`}
+            </td>
+            <td class="py-2.5 px-3 text-right font-mono text-slate-300">
+              ${reached ? '-' : `~${matches.toLocaleString()} เกม`}
+            </td>
+            <td class="py-2.5 px-3 text-xs text-slate-300">
+              ${m.rule}
+            </td>
+            <td class="py-2.5 px-3 text-right font-mono text-sky-300">
+              ${resetSim.resetRankName} (${resetSim.resetPoints.toLocaleString()})
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // =====================================================================
+    // TAB 2: CONQUEROR PUSH PLANNER ENGINE
+    // =====================================================================
+    function syncPlannerWithMain() {
+      const activeData = appState.modes[appState.activeMode];
+      appState.planner.currentPts = activeData.points;
+      appState.planner.serverCutoff = activeData.conqThreshold;
+      appState.planner.avgPtsPerMatch = appState.avgPtsPerMatch;
+
+      document.getElementById('planCurrentPts').value = appState.planner.currentPts;
+      document.getElementById('planServerCutoff').value = appState.planner.serverCutoff;
+      document.getElementById('planAvgPtsPerMatch').value = appState.planner.avgPtsPerMatch;
+
+      calculateConquerorPlan();
+      showToast('ดึงแต้มและเกณฑ์เซิร์ฟเวอร์จากหน้าหลักเรียบร้อย!', 'success');
+    }
+
+    function applyPlannerPreset(days, inflation, avgPts) {
+      document.getElementById('planTargetDays').value = days;
+      document.getElementById('planDailyInflation').value = inflation;
+      document.getElementById('planAvgPtsPerMatch').value = avgPts;
+      calculateConquerorPlan();
+      showToast(`ใช้พรีเซ็ตดัน ${days} วัน (เซิร์ฟขยับ +${inflation}/วัน) แล้ว`, 'info');
+    }
+
+    function calculateConquerorPlan() {
+      const currentPts = Math.max(1000, Number(document.getElementById('planCurrentPts').value) || 5720);
+      const serverCutoff = Math.max(4200, Number(document.getElementById('planServerCutoff').value) || 5850);
+      const dailyInflation = Math.max(0, Number(document.getElementById('planDailyInflation').value) || 0);
+      const targetDays = Math.max(1, Math.min(30, Number(document.getElementById('planTargetDays').value) || 3));
+      const avgPtsPerMatch = Math.max(1, Number(document.getElementById('planAvgPtsPerMatch').value) || 15);
+      const avgMatchMinutes = Math.max(5, Number(document.getElementById('planAvgMatchMinutes').value) || 24);
+      const safetyBuffer = Math.max(0, Number(document.getElementById('planSafetyBuffer').value) || 20);
+      const protectionCards = Math.max(0, Number(document.getElementById('planProtectionCards').value) || 0);
+
+      appState.planner = {
+        ...appState.planner,
+        currentPts,
+        serverCutoff,
+        dailyInflation,
+        targetDays,
+        avgPtsPerMatch,
+        avgMatchMinutes,
+        safetyBuffer,
+        protectionCards
+      };
+      saveState();
+
+      // Final day server cutoff includes inflation over (targetDays - 1) or targetDays
+      const projectedCutoff = Math.max(5200, serverCutoff + dailyInflation * targetDays);
+      const finalTargetPts = projectedCutoff + safetyBuffer;
+      const totalNetPtsNeeded = Math.max(0, finalTargetPts - currentPts);
+      const dailyPtsQuota = Math.ceil(totalNetPtsNeeded / targetDays);
+      const matchesPerDay = Math.ceil(dailyPtsQuota / avgPtsPerMatch);
+      const totalMatches = matchesPerDay * targetDays;
+      const hoursPerDay = ((matchesPerDay * avgMatchMinutes) / 60).toFixed(1);
+
+      document.getElementById('planFinalTargetPts').textContent = finalTargetPts.toLocaleString();
+      document.getElementById('planTotalNetPtsNeeded').textContent = `+${totalNetPtsNeeded.toLocaleString()}`;
+      document.getElementById('planDailyPtsQuota').textContent = `เฉลี่ยวันละ +${dailyPtsQuota.toLocaleString()} แต้ม`;
+      document.getElementById('planMatchesPerDay').textContent = `${matchesPerDay} เกม/วัน`;
+      document.getElementById('planTotalMatches').textContent = `รวมทั้งหมด ~${totalMatches} เกม`;
+      document.getElementById('planHoursPerDay').textContent = `${hoursPerDay} ชม./วัน`;
+      document.getElementById('planCardCoverage').textContent = `บัตรกันลด ${protectionCards} ใบ เซฟได้ ~${protectionCards * 20} แต้ม`;
+
+      const badge = document.getElementById('planFeasibilityBadge');
+      const hoursNum = parseFloat(hoursPerDay);
+      if (totalNetPtsNeeded === 0) {
+        badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+        badge.textContent = '✅ แต้มถึงเป้าแล้ว รอรีเซ็ตเซิร์ฟเวอร์!';
+      } else if (hoursNum <= 3.5) {
+        badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30';
+        badge.textContent = '🟢 แผนสบายๆ ทำได้จริง (เล่นวันละไม่เกิน 3.5 ชม.)';
+      } else if (hoursNum <= 6.5) {
+        badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30';
+        badge.textContent = '🟡 แผนเข้มข้น ต้องเน้นติด Top 5 สม่ำเสมอ';
+      } else {
+        badge.className = 'px-3 py-1 rounded-full text-xs font-bold bg-red-500/20 text-red-300 border border-red-500/30';
+        badge.textContent = '🔴 หนักมาก! แนะนำให้เพิ่มจำนวนวันในการไต่';
+      }
+
+      // Render Day-by-Day Table
+      const tbody = document.getElementById('plannerScheduleBody');
+      let rowsHtml = '';
+      for (let d = 1; d <= targetDays; d++) {
+        const dateObj = new Date(Date.now() + (d - 1) * 86400000);
+        const dateStr = dateObj.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' });
+        const dayCutoff = Math.max(5200, serverCutoff + dailyInflation * d);
+        const dayTarget = Math.min(finalTargetPts, currentPts + dailyPtsQuota * d);
+        const isChecked = !!appState.planner.completedDays[d];
+
+        rowsHtml += `
+          <tr class="hover:bg-slate-800/40 transition ${isChecked ? 'bg-emerald-950/20 opacity-80' : ''}">
+            <td class="py-2.5 px-3 font-semibold text-white">
+              วันที่ ${d} <span class="text-xs text-slate-400 font-normal">(${dateStr})</span>
+            </td>
+            <td class="py-2.5 px-3 text-right font-mono text-red-400">
+              ${dayCutoff.toLocaleString()}
+            </td>
+            <td class="py-2.5 px-3 text-right font-mono text-amber-300 font-bold">
+              +${dailyPtsQuota.toLocaleString()}
+            </td>
+            <td class="py-2.5 px-3 text-right font-mono text-pubgGold font-bold">
+              ${dayTarget.toLocaleString()}
+            </td>
+            <td class="py-2.5 px-3 text-right font-mono text-slate-300">
+              ${matchesPerDay} เกม (${hoursPerDay} ชม.)
+            </td>
+            <td class="py-2.5 px-3 text-center">
+              <button onclick="togglePlanDayComplete(${d})" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+                isChecked
+                  ? 'bg-emerald-500 text-obsidian font-bold'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700'
+              }">
+                ${isChecked ? '<i class="fa-solid fa-check mr-1"></i>สำเร็จ' : 'เช็คชื่อ'}
+              </button>
+            </td>
+          </tr>
+        `;
+      }
+      tbody.innerHTML = rowsHtml;
+    }
+
+    function togglePlanDayComplete(dayNum) {
+      appState.planner.completedDays[dayNum] = !appState.planner.completedDays[dayNum];
+      saveState();
+      calculateConquerorPlan();
+    }
+
+    // =====================================================================
+    // TAB 3: 2026 PROMOTION MATCHES TRACKER (V4.2+)
+    // =====================================================================
+    function renderPromotionCards() {
+      const container = document.getElementById('promotionCardsContainer');
+      const currentPts = appState.modes[appState.activeMode].points;
+      const keys = ['ace', 'master', 'dominator'];
+
+      container.innerHTML = keys.map(key => {
+        const promo = appState.promotions[key];
+        const ptsEligible = currentPts >= promo.reqPts;
+        const passCount = promo.history.filter(h => h === 'pass').length;
+        const topTarget = promo.selectedMap === 'Erangel' ? promo.erangelTop : promo.livikTop;
+
+        // Render slots
+        let slotsHtml = '';
+        for (let i = 0; i < promo.reqStreak; i++) {
+          const passed = i < passCount;
+          slotsHtml += `
+            <div class="flex-1 h-12 rounded-xl border flex flex-col items-center justify-center font-mono text-xs transition ${
+              passed
+                ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 font-bold shadow-inner'
+                : 'bg-slate-900/80 border-slate-700 text-slate-500'
+            }">
+              <i class="fa-solid ${passed ? 'fa-circle-check text-emerald-400 text-base' : 'fa-circle-dot text-slate-600'}"></i>
+              <span class="text-[10px] mt-0.5">เกมที่ ${i + 1}</span>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="tac-card rounded-2xl p-5 flex flex-col justify-between space-y-4 ${promo.promoted ? 'border-emerald-500/40' : ''}">
+            <div class="space-y-3">
+              <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div>
+                  <h3 class="text-base font-bold text-white">${promo.title}</h3>
+                  <div class="text-xs text-slate-400">เกณฑ์แต้มขั้นต่ำ: <strong class="text-pubgGold font-mono">${promo.reqPts.toLocaleString()}</strong></div>
+                </div>
+                <span class="px-2.5 py-1 rounded-full text-xs font-bold ${
+                  promo.promoted
+                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
+                    : ptsEligible
+                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                      : 'bg-slate-800 text-slate-400'
+                }">
+                  ${promo.promoted ? '🏆 เลื่อนขั้นสำเร็จ' : ptsEligible ? 'พร้อมสอบเลื่อนขั้น' : `ขาด ${promo.reqPts - currentPts} แต้ม`}
+                </span>
+              </div>
+
+              <!-- Map Selector -->
+              <div class="flex items-center justify-between bg-slate-900/80 rounded-xl p-2.5 border border-slate-800">
+                <span class="text-xs text-slate-300">เลือกแผนที่ที่ใช้สอบ:</span>
+                <div class="flex gap-1.5">
+                  <button onclick="setPromoMap('${key}', 'Erangel')" class="px-3 py-1 rounded-lg text-xs font-semibold transition ${
+                    promo.selectedMap === 'Erangel' ? 'bg-pubgGold text-obsidian font-bold' : 'bg-slate-800 text-slate-300'
+                  }">Erangel (Top ${promo.erangelTop})</button>
+                  <button onclick="setPromoMap('${key}', 'Livik')" class="px-3 py-1 rounded-lg text-xs font-semibold transition ${
+                    promo.selectedMap === 'Livik' ? 'bg-pubgGold text-obsidian font-bold' : 'bg-slate-800 text-slate-300'
+                  }">Livik (Top ${promo.livikTop})</button>
+                </div>
+              </div>
+
+              <!-- Requirement Banner -->
+              <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 text-xs space-y-1">
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-400">ภารกิจปัจจุบัน:</span>
+                  <span class="font-bold text-amber-300">ติด Top ${topTarget} ใน ${promo.selectedMap} (${promo.reqStreak} เกมติด)</span>
+                </div>
+                <div class="flex items-center justify-between">
+                  <span class="text-slate-400">สิทธิ์ป้องกันการพลาด 1 ครั้ง:</span>
+                  <span class="font-semibold ${promo.protectionUsed ? 'text-red-400' : 'text-emerald-400'}">
+                    ${promo.protectionUsed ? 'ใช้สิทธิ์ป้องกันไปแล้ว' : '🛡️ ยังมีสิทธิ์ป้องกันฟรี 1 ครั้ง'}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Streak Progress Slots -->
+              <div class="space-y-1.5">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-slate-400">ความคืบหน้าจำนวนเกมต่อเนื่อง:</span>
+                  <span class="font-mono font-bold text-white">${passCount} / ${promo.reqStreak} เกม</span>
+                </div>
+                <div class="flex gap-2">
+                  ${slotsHtml}
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="space-y-2 pt-2 border-t border-slate-800">
+              <div class="grid grid-cols-2 gap-2">
+                <button onclick="recordPromoMatch('${key}', true)" class="py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/20 transition">
+                  <i class="fa-solid fa-check mr-1"></i>ผ่านเกณฑ์ (Top ${topTarget})
+                </button>
+                <button onclick="recordPromoMatch('${key}', false)" class="py-2 rounded-xl bg-red-600/80 hover:bg-red-600 text-white font-bold text-xs transition">
+                  <i class="fa-solid fa-xmark mr-1"></i>ไม่ผ่านเกณฑ์
+                </button>
+              </div>
+              <button onclick="resetSinglePromo('${key}')" class="w-full py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition">
+                รีเซ็ตการสอบระดับนี้
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function setPromoMap(key, mapName) {
+      appState.promotions[key].selectedMap = mapName;
+      saveState();
+      renderPromotionCards();
+    }
+
+    function recordPromoMatch(key, isPass) {
+      const promo = appState.promotions[key];
+      if (promo.promoted) {
+        showToast(`${promo.title} ผ่านการเลื่อนขั้นครบแล้ว! กดรีเซ็ตหากต้องการจำลองใหม่`, 'info');
+        return;
+      }
+
+      if (isPass) {
+        promo.history.push('pass');
+        const passCount = promo.history.filter(h => h === 'pass').length;
+        if (passCount >= promo.reqStreak) {
+          promo.promoted = true;
+          showToast(`🎉 ยินดีด้วย! คุณสอบผ่าน ${promo.title} ครบ ${promo.reqStreak} เกมติดแล้ว!`, 'success');
+        } else {
+          showToast(`ผ่านเกณฑ์! สะสม ${passCount}/${promo.reqStreak} เกม`, 'success');
+        }
+      } else {
+        if (!promo.protectionUsed) {
+          promo.protectionUsed = true;
+          promo.history.push('fail');
+          showToast(`🛡️ ใช้สิทธิ์ป้องกันการพลาด 1 ครั้ง! สถิติต่อเนื่องไม่ถูกรีเซ็ต`, 'warn');
+        } else {
+          promo.history = [];
+          promo.protectionUsed = false;
+          showToast(`พลาดเกินสิทธิ์ป้องกัน! รีเซ็ตจำนวนเกมต่อเนื่องเริ่มนับใหม่`, 'warn');
+        }
+      }
+
+      saveState();
+      renderPromotionCards();
+    }
+
+    function resetSinglePromo(key) {
+      appState.promotions[key].history = [];
+      appState.promotions[key].protectionUsed = false;
+      appState.promotions[key].promoted = false;
+      saveState();
+      renderPromotionCards();
+      showToast('รีเซ็ตสถานะการสอบเรียบร้อยแล้ว', 'info');
+    }
+
+    function resetAllPromotions() {
+      ['ace', 'master', 'dominator'].forEach(k => {
+        appState.promotions[k].history = [];
+        appState.promotions[k].protectionUsed = false;
+        appState.promotions[k].promoted = false;
+      });
+      saveState();
+      renderPromotionCards();
+      showToast('รีเซ็ตผลสอบเลื่อนขั้นทั้ง 3 ระดับเรียบร้อย', 'info');
+    }
+
+    // =====================================================================
+    // TAB 4: 6-MODE TABLE, BAR CHART & MATCH LOGGER
+    // =====================================================================
+    function renderSixModesTab() {
+      const tbody = document.getElementById('sixModesTableBody');
+      const chartContainer = document.getElementById('sixModesChartContainer');
+
+      let highestMode = { name: '', pts: 0 };
+
+      tbody.innerHTML = GAME_MODES.map(m => {
+        const data = appState.modes[m.id] || { points: m.defaultPts, conqThreshold: m.defaultConq };
+        const rankEval = evaluateRank(data.points, data.conqThreshold);
+        const resetEval = evaluateSeasonReset(data.points);
+        const isActive = appState.activeMode === m.id;
+
+        if (data.points > highestMode.pts) {
+          highestMode = { name: m.name, pts: data.points, rank: rankEval.rankName };
+        }
+
+        return `
+          <tr class="hover:bg-slate-800/40 transition ${isActive ? 'bg-amber-500/10' : ''}">
+            <td class="py-2.5 px-2.5">
+              <div class="font-bold text-white">${m.name}</div>
+              <div class="text-[11px] text-slate-400">${m.desc}</div>
+            </td>
+            <td class="py-2.5 px-2.5 text-center">
+              <input
+                type="number"
+                min="1000"
+                max="9999"
+                value="${data.points}"
+                oninput="updateSpecificModePoints('${m.id}', this.value)"
+                class="w-24 bg-obsidian border border-amber-500/50 focus:border-pubgGold rounded-lg px-2 py-1 font-mono text-sm font-bold text-pubgGold text-center outline-none"
+              />
+            </td>
+            <td class="py-2.5 px-2.5">
+              <div class="font-bold ${rankEval.isConquerorEligible ? 'text-conqRed' : 'text-amber-300'}">
+                ${rankEval.isConquerorEligible ? `Conqueror (${rankEval.stars}★)` : rankEval.rankName}
+              </div>
+              <div class="text-[10px] text-slate-400">ถัดไป: ${rankEval.nextRankName}</div>
+            </td>
+            <td class="py-2.5 px-2.5 text-right font-mono text-emerald-400 font-semibold">
+              +${rankEval.ptsNeededNext}
+            </td>
+            <td class="py-2.5 px-2.5">
+              <div class="font-semibold text-sky-300">${resetEval.resetRankName}</div>
+              <div class="text-[11px] font-mono text-slate-400">${resetEval.resetPoints.toLocaleString()} แต้ม</div>
+            </td>
+            <td class="py-2.5 px-2.5 text-center">
+              <button onclick="handleActiveModeChange('${m.id}')" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition ${
+                isActive
+                  ? 'bg-pubgGold text-obsidian font-bold'
+                  : 'bg-slate-800 hover:bg-slate-700 text-slate-300'
+              }">
+                ${isActive ? 'ใช้งานอยู่' : 'เลือก'}
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      document.getElementById('highestModeSummary').textContent = `แรงค์สูงสุด: ${highestMode.name} (${highestMode.pts.toLocaleString()})`;
+
+      // Render Horizontal Comparison Bars
+      chartContainer.innerHTML = GAME_MODES.map(m => {
+        const data = appState.modes[m.id] || { points: m.defaultPts };
+        const resetEval = evaluateSeasonReset(data.points);
+        const curPct = Math.min(100, Math.round((data.points / 6500) * 100));
+        const resPct = Math.min(100, Math.round((resetEval.resetPoints / 6500) * 100));
+
+        return `
+          <div class="space-y-1">
+            <div class="flex justify-between text-xs">
+              <span class="font-semibold text-slate-200">${m.name}</span>
+              <span class="font-mono text-xs">
+                <strong class="text-pubgGold">${data.points.toLocaleString()}</strong>
+                <span class="text-slate-500 mx-1">&rarr;</span>
+                <strong class="text-sky-400">${resetEval.resetPoints.toLocaleString()}</strong>
+              </span>
+            </div>
+            <div class="w-full bg-slate-900 rounded-lg h-4 p-0.5 flex flex-col justify-center gap-0.5 border border-slate-800">
+              <div class="h-1.5 rounded-full bg-gradient-to-r from-amber-500 to-pubgGold transition-all" style="width: ${curPct}%"></div>
+              <div class="h-1.5 rounded-full bg-sky-400 transition-all" style="width: ${resPct}%"></div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateSpecificModePoints(modeId, val) {
+      const num = Math.max(1000, Math.min(9999, Math.floor(Number(val) || 1000)));
+      appState.modes[modeId].points = num;
+      saveState();
+      if (modeId === appState.activeMode) {
+        renderMainCalculator();
+      }
+      renderSixModesTab();
+    }
+
+    // Match Logger Functions
+    function addMatchLogEntry() {
+      const mode = document.getElementById('logModeInput').value;
+      const map = document.getElementById('logMapInput').value;
+      const placement = Math.max(1, Math.min(100, Number(document.getElementById('logPlacementInput').value) || 1));
+      const kills = Math.max(0, Number(document.getElementById('logKillsInput').value) || 0);
+      const delta = Number(document.getElementById('logDeltaPtsInput').value) || 0;
+      const note = document.getElementById('logNoteInput').value.trim();
+      const autoUpdate = document.getElementById('logAutoUpdatePts').checked;
+
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+
+      const entry = {
+        id: Date.now(),
+        time: `วันนี้ ${timeStr}`,
+        mode,
+        map,
+        placement,
+        kills,
+        delta,
+        note: note || (placement === 1 ? '🍗 Winner Winner Chicken Dinner!' : `จบอันดับ #${placement}`)
+      };
+
+      appState.matchLogs.push(entry);
+
+      if (autoUpdate && appState.modes[mode]) {
+        appState.modes[mode].points = Math.max(1000, Math.min(9999, appState.modes[mode].points + delta));
+      }
+
+      document.getElementById('logNoteInput').value = '';
+      saveState();
+      renderAll();
+      showToast(`บันทึกแมตช์ ${map} (#${placement}, ${delta >= 0 ? '+' + delta : delta} แต้ม) เรียบร้อย!`, 'success');
+    }
+
+    function deleteMatchLog(id) {
+      appState.matchLogs = appState.matchLogs.filter(item => item.id !== id);
+      saveState();
+      renderMatchLogger();
+      showToast('ลบรายการบันทึกแมตช์แล้ว', 'info');
+    }
+
+    function clearMatchLogs() {
+      openConfirmModal(
+        'ยืนยันการล้างประวัติแมตช์',
+        'คุณต้องการล้างประวัติการเล่นรายเกมทั้งหมดใช่หรือไม่? (แต้มแรงค์ปัจจุบันของแต่ละโหมดจะไม่ถูกลบ)',
+        () => {
+          appState.matchLogs = [];
+          saveState();
+          renderMatchLogger();
+          showToast('ล้างประวัติการเล่นทั้งหมดเรียบร้อยแล้ว', 'info');
+        }
+      );
+    }
+
+    function useLoggedAvgPoints() {
+      if (!appState.matchLogs.length) {
+        showToast('ยังไม่มีประวัติแมตช์ที่บันทึกไว้', 'warn');
+        return;
+      }
+      const totalDelta = appState.matchLogs.reduce((acc, m) => acc + Number(m.delta || 0), 0);
+      const realAvg = Math.max(1, Math.round(totalDelta / appState.matchLogs.length));
+      appState.avgPtsPerMatch = realAvg;
+      appState.planner.avgPtsPerMatch = realAvg;
+      document.getElementById('planAvgPtsPerMatch').value = realAvg;
+      saveState();
+      renderMainCalculator();
+      calculateConquerorPlan();
+      showToast(`อัปเดตแต้มเฉลี่ยต่อเกมเป็น +${realAvg} แต้ม/เกม ตามสถิติจริงแล้ว!`, 'success');
+    }
+
+    function renderMatchLogger() {
+      const logs = appState.matchLogs;
+      const total = logs.length;
+      const netPts = logs.reduce((s, m) => s + Number(m.delta || 0), 0);
+      const totalKills = logs.reduce((s, m) => s + Number(m.kills || 0), 0);
+      const top10Count = logs.filter(m => Number(m.placement) <= 10).length;
+      const winCount = logs.filter(m => Number(m.placement) === 1).length;
+
+      const avgDelta = total > 0 ? (netPts / total).toFixed(1) : '0.0';
+      const avgKills = total > 0 ? (totalKills / total).toFixed(1) : '0.0';
+      const top10Pct = total > 0 ? Math.round((top10Count / total) * 100) : 0;
+
+      document.getElementById('statTotalMatches').textContent = `${total} เกม`;
+      document.getElementById('statTop10Rate').textContent = `Top 10: ${top10Pct}%`;
+      document.getElementById('statNetPoints').textContent = `${netPts >= 0 ? '+' : ''}${netPts}`;
+      document.getElementById('statAvgDelta').textContent = `${Number(avgDelta) >= 0 ? '+' : ''}${avgDelta}`;
+      document.getElementById('statAvgKills').textContent = avgKills;
+      document.getElementById('statTotalWins').textContent = `กินไก่ (#1): ${winCount} ครั้ง`;
+
+      // Render History Table (newest first)
+      const tbody = document.getElementById('matchLogTableBody');
+      if (total === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="7" class="py-6 text-center text-slate-400">ยังไม่มีรายการบันทึกแมตช์ ลองกรอกผลแมตช์ด้านซ้ายได้เลย!</td>
+          </tr>
+        `;
+      } else {
+        tbody.innerHTML = [...logs].reverse().map(m => {
+          const modeObj = GAME_MODES.find(gm => gm.id === m.mode);
+          const modeLabel = modeObj ? modeObj.name : m.mode;
+          const isPositive = m.delta >= 0;
+          return `
+            <tr class="hover:bg-slate-800/40 transition">
+              <td class="py-2 px-2.5 text-slate-400 font-mono">${m.time}</td>
+              <td class="py-2 px-2.5">
+                <span class="font-semibold text-white">${m.map}</span>
+                <span class="text-[10px] text-slate-400 block">${modeLabel}</span>
+              </td>
+              <td class="py-2 px-2.5 text-center font-mono font-bold ${m.placement === 1 ? 'text-pubgGold' : 'text-slate-200'}">
+                #${m.placement}
+              </td>
+              <td class="py-2 px-2.5 text-center font-mono text-red-400 font-semibold">${m.kills}</td>
+              <td class="py-2 px-2.5 text-right font-mono font-bold ${isPositive ? 'text-emerald-400' : 'text-red-400'}">
+                ${isPositive ? '+' + m.delta : m.delta}
+              </td>
+              <td class="py-2 px-2.5 text-slate-300">${m.note || '-'}</td>
+              <td class="py-2 px-2.5 text-center">
+                <button onclick="deleteMatchLog(${m.id})" class="text-slate-500 hover:text-red-400 transition">
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      // Render SVG Trend Line
+      const svgBox = document.getElementById('matchTrendSvgContainer');
+      const recent = logs.slice(-15);
+      if (recent.length < 2) {
+        svgBox.innerHTML = `<div class="h-full flex items-center justify-center text-xs text-slate-500">บันทึกอย่างน้อย 2 แมตช์เพื่อแสดงกราฟแนวโน้มแต้ม</div>`;
+        return;
+      }
+
+      let cumulative = 0;
+      const pointsSeries = recent.map(m => {
+        cumulative += Number(m.delta || 0);
+        return cumulative;
+      });
+
+      const minVal = Math.min(0, ...pointsSeries);
+      const maxVal = Math.max(10, ...pointsSeries);
+      const range = Math.max(1, maxVal - minVal);
+      const width = 600;
+      const height = 110;
+      const pad = 16;
+
+      const coords = pointsSeries.map((val, idx) => {
+        const x = pad + (idx / (pointsSeries.length - 1)) * (width - pad * 2);
+        const y = height - pad - ((val - minVal) / range) * (height - pad * 2);
+        return { x, y, val };
+      });
+
+      const polyPoints = coords.map(c => `${c.x.toFixed(1)},${c.y.toFixed(1)}`).join(' ');
+      const circles = coords.map(c => `
+        <circle cx="${c.x.toFixed(1)}" cy="${c.y.toFixed(1)}" r="4" fill="#F59E0B" stroke="#0B0F19" stroke-width="2" />
+        <text x="${c.x.toFixed(1)}" y="${(c.y - 7).toFixed(1)}" text-anchor="middle" fill="#FDE047" font-size="9" font-family="JetBrains Mono">${c.val >= 0 ? '+' + c.val : c.val}</text>
+      `).join('');
+
+      svgBox.innerHTML = `
+        <svg viewBox="0 0 ${width} ${height}" class="w-full h-full overflow-visible">
+          <line x1="${pad}" y1="${height - pad}" x2="${width - pad}" y2="${height - pad}" stroke="#334155" stroke-dasharray="4 4" stroke-width="1" />
+          <polyline fill="none" stroke="#F59E0B" stroke-width="2.5" points="${polyPoints}" />
+          ${circles}
+        </svg>
+      `;
+    }
+
+    // =====================================================================
+    // TAB 5: REFERENCE TABLE, SETTINGS & EXPORT/IMPORT
+    // =====================================================================
+    function renderReferenceTable() {
+      const query = (document.getElementById('refSearchInput').value || '').trim().toLowerCase();
+      const fullList = getFullReferenceList();
+
+      const filtered = fullList.filter(item => {
+        if (!query) return true;
+        return (
+          item.name.toLowerCase().includes(query) ||
+          item.note.toLowerCase().includes(query) ||
+          String(item.min).includes(query) ||
+          String(item.max).includes(query)
+        );
+      });
+
+      const tbody = document.getElementById('referenceTableBody');
+      tbody.innerHTML = filtered.map(item => {
+        const resetSim = evaluateSeasonReset(item.min);
+        return `
+          <tr class="hover:bg-slate-800/40 transition">
+            <td class="py-2 px-3 font-bold text-white">${item.name}</td>
+            <td class="py-2 px-3 text-right font-mono text-pubgGold">${item.min.toLocaleString()}</td>
+            <td class="py-2 px-3 text-right font-mono text-slate-300">${item.max === 9999 ? 'ไม่จำกัด' : item.max.toLocaleString()}</td>
+            <td class="py-2 px-3 font-semibold text-sky-300">${resetSim.resetRankName}</td>
+            <td class="py-2 px-3 text-right font-mono text-sky-400 font-bold">${resetSim.resetPoints.toLocaleString()}</td>
+            <td class="py-2 px-3 text-xs text-slate-300">${item.note}</td>
+            <td class="py-2 px-3 text-center">
+              <button onclick="tryPointsFromRef(${item.min})" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-pubgGold hover:text-obsidian text-xs font-medium text-amber-300 transition">
+                ลองแต้มนี้
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function tryPointsFromRef(pts) {
+      appState.modes[appState.activeMode].points = pts;
+      saveState();
+      renderAll();
+      switchTab('tab-calculator');
+      showToast(`จำลองแต้มที่ ${pts.toLocaleString()} แต้มในหน้าคำนวณหลักแล้ว`, 'info');
+    }
+
+    function syncSettingsInputs() {
+      document.getElementById('settingSeasonName').value = appState.settings.seasonName;
+      document.getElementById('settingDailyResetTime').value = appState.settings.dailyResetTime;
+      document.getElementById('settingSeasonEndDate').value = appState.settings.seasonEndDate;
+      document.getElementById('settingResetOffset').value = appState.settings.resetOffset;
+      document.getElementById('headerSeasonBadge').textContent = appState.settings.seasonName;
+      document.getElementById('headerResetClockLabel').textContent = `(${appState.settings.dailyResetTime})`;
+    }
+
+    function saveCustomSettings() {
+      appState.settings.seasonName = document.getElementById('settingSeasonName').value || 'C11S33 • 2026';
+      appState.settings.dailyResetTime = document.getElementById('settingDailyResetTime').value || '07:20';
+      appState.settings.seasonEndDate = document.getElementById('settingSeasonEndDate').value;
+      appState.settings.resetOffset = Number(document.getElementById('settingResetOffset').value) || 0;
+
+      document.getElementById('headerSeasonBadge').textContent = appState.settings.seasonName;
+      document.getElementById('headerResetClockLabel').textContent = `(${appState.settings.dailyResetTime})`;
+
+      saveState();
+      renderMainCalculator();
+      renderSixModesTab();
+      renderReferenceTable();
+    }
+
+    function setSeasonDaysFromNow(days) {
+      const target = new Date(Date.now() + days * 86400000);
+      const isoLocal = new Date(target.getTime() - target.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+      document.getElementById('settingSeasonEndDate').value = isoLocal;
+      saveCustomSettings();
+      showToast(`ตั้งวันรีแรงค์ซีซั่นเป็นอีก ${days} วันข้างหน้าเรียบร้อย!`, 'success');
+    }
+
+    // Export JSON Backup
+    function exportFullBackupJSON() {
+      const dataStr = JSON.stringify(appState, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `PUBGM_Rank_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('ดาวน์โหลดไฟล์สำรองข้อมูล .JSON เรียบร้อยแล้ว!', 'success');
+    }
+
+    // Import JSON Backup
+    function importFullBackupJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const imported = JSON.parse(e.target.result);
+          if (!imported.modes) throw new Error('Invalid format');
+          appState = { ...getDefaultState(), ...imported };
+          saveState();
+          renderAll();
+          showToast('กู้คืนข้อมูลจากไฟล์สำรองเรียบร้อยแล้ว!', 'success');
+        } catch (err) {
+          showToast('ไฟล์ไม่ถูกต้อง กรุณาเลือกไฟล์ .JSON ที่ส่งอกจากระบบนี้', 'warn');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    // Export CSV (Excel compatible with UTF-8 BOM)
+    function exportModesCSV() {
+      let csv = '\uFEFF'; // UTF-8 BOM for Thai in Excel
+      csv += 'โหมดการเล่น,แต้มปัจจุบัน,แรงค์ปัจจุบัน,จำนวนดาว,แต้มที่ขาดไปขั้นถัดไป,แรงค์หลังรีซีซั่น,แต้มเริ่มต้นซีซั่นใหม่\n';
+
+      GAME_MODES.forEach(m => {
+        const d = appState.modes[m.id];
+        const r = evaluateRank(d.points, d.conqThreshold);
+        const s = evaluateSeasonReset(d.points);
+        csv += `"${m.name}",${d.points},"${r.rankName}",${r.stars},${r.ptsNeededNext},"${s.resetRankName}",${s.resetPoints}\n`;
+      });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `PUBGM_6Modes_Summary_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('ส่งออกไฟล์ตาราง .CSV สำหรับเปิดใน Excel เรียบร้อย!', 'success');
+    }
+
+    function confirmResetAllData() {
+      openConfirmModal(
+        'รีเซ็ตข้อมูลทั้งหมดกลับเป็นค่าเริ่มต้น',
+        'คุณต้องการล้างค่าแต้ม ประวัติแมตช์ และการตั้งค่าทั้งหมดกลับเป็นค่าเริ่มต้นของระบบใช่หรือไม่?',
+        () => {
+          appState = getDefaultState();
+          saveState();
+          renderAll();
+          showToast('รีเซ็ตข้อมูลทั้งหมดกลับเป็นค่าเริ่มต้นแล้ว', 'info');
+        }
+      );
+    }
+
+    // =====================================================================
+    // LIVE COUNTDOWN TIMERS (CONQUEROR DAILY RESET & SEASON END)
+    // =====================================================================
+    function updateLiveTimers() {
+      const now = new Date();
+
+      // 1. Daily Conqueror Reset Countdown
+      const timeParts = (appState.settings.dailyResetTime || '07:20').split(':');
+      const targetHour = parseInt(timeParts[0], 10) || 7;
+      const targetMin = parseInt(timeParts[1], 10) || 20;
+
+      const nextConqReset = new Date(now);
+      nextConqReset.setHours(targetHour, targetMin, 0, 0);
+      if (now >= nextConqReset) {
+        nextConqReset.setDate(nextConqReset.getDate() + 1);
+      }
+
+      const diffConq = Math.max(0, nextConqReset - now);
+      const ch = String(Math.floor(diffConq / 3600000)).padStart(2, '0');
+      const cm = String(Math.floor((diffConq % 3600000) / 60000)).padStart(2, '0');
+      const cs = String(Math.floor((diffConq % 60000) / 1000)).padStart(2, '0');
+      document.getElementById('conquerorCountdown').textContent = `${ch}:${cm}:${cs}`;
+
+      // 2. Season Reset Countdown
+      const seasonEnd = new Date(appState.settings.seasonEndDate);
+      const diffSeason = seasonEnd - now;
+      const seasonEl = document.getElementById('seasonCountdown');
+
+      if (isNaN(seasonEnd.getTime()) || diffSeason <= 0) {
+        seasonEl.textContent = 'รีซีซั่นแล้ว (ตั้งวันใหม่ได้)';
+      } else {
+        const sd = Math.floor(diffSeason / 86400000);
+        const sh = String(Math.floor((diffSeason % 86400000) / 3600000)).padStart(2, '0');
+        const sm = String(Math.floor((diffSeason % 3600000) / 60000)).padStart(2, '0');
+        seasonEl.textContent = `${sd} วัน ${sh}:${sm} ชม.`;
+      }
+    }
+
+    // =====================================================================
+    // NAVIGATION, TOASTS & CUSTOM MODAL HELPERS
+    // =====================================================================
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-panel').forEach(panel => {
+        panel.classList.add('hidden');
+      });
+      document.getElementById(tabId).classList.remove('hidden');
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.className = 'tab-btn shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition flex items-center gap-2 bg-slate-800/70 text-slate-300 hover:bg-slate-800 hover:text-white';
+      });
+
+      const activeBtn = document.getElementById(`btn-${tabId}`);
+      if (activeBtn) {
+        activeBtn.className = 'tab-btn shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-2 bg-pubgGold text-obsidian shadow-lg shadow-amber-500/20';
+      }
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+
+      const styles = {
+        success: 'border-emerald-500/50 bg-slate-900/95 text-emerald-300',
+        warn:    'border-amber-500/50 bg-slate-900/95 text-amber-300',
+        info:    'border-sky-500/50 bg-slate-900/95 text-sky-300'
+      };
+      const icons = {
+        success: 'fa-circle-check text-emerald-400',
+        warn:    'fa-triangle-exclamation text-amber-400',
+        info:    'fa-circle-info text-sky-400'
+      };
+
+      toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl border shadow-xl backdrop-blur-md text-xs font-medium transition-all duration-300 ${styles[type] || styles.info}`;
+      toast.innerHTML = `
+        <i class="fa-solid ${icons[type] || icons.info} text-base"></i>
+        <span>${message}</span>
+      `;
+
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateY(8px)';
+        setTimeout(() => toast.remove(), 250);
+      }, 2800);
+    }
+
+    let confirmCallback = null;
+    function openConfirmModal(title, message, onConfirm) {
+      document.getElementById('confirmModalTitle').textContent = title;
+      document.getElementById('confirmModalMessage').textContent = message;
+      confirmCallback = onConfirm;
+      const modal = document.getElementById('confirmModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeConfirmModal() {
+      const modal = document.getElementById('confirmModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      confirmCallback = null;
+    }
+
+    document.getElementById('confirmCancelBtn').addEventListener('click', closeConfirmModal);
+    document.getElementById('confirmOkBtn').addEventListener('click', () => {
+      if (typeof confirmCallback === 'function') confirmCallback();
+      closeConfirmModal();
+    });
+
+    // Render Everything on Load
+    function renderAll() {
+      syncSettingsInputs();
+      renderMainCalculator();
+      calculateConquerorPlan();
+      renderPromotionCards();
+      renderSixModesTab();
+      renderMatchLogger();
+      renderReferenceTable();
+    }
+
+    window.onload = function() {
+      renderAll();
+      updateLiveTimers();
+      setInterval(updateLiveTimers, 1000);
+    };
+  </script>
+</body>
+</html>
