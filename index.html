@@ -1,0 +1,2697 @@
+<!DOCTYPE html>
+<html lang="th" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PUBG MOBILE Squad 4-Player Rank Hub & Tactical Companion (2026)</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Prompt & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700;800&family=Prompt:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Prompt', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            obsidian: '#070B14',
+            slateDark: '#0F172A',
+            slateCard: '#1E293B',
+            pubgGold: '#F59E0B',
+            pubgAmber: '#D97706',
+            conqRed: '#EF4444',
+            tacGreen: '#10B981',
+            tacCyan: '#06B6D4'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    body {
+      background-color: #070B14;
+      background-image:
+        radial-gradient(circle at 12% 12%, rgba(245, 158, 11, 0.08) 0%, transparent 35%),
+        radial-gradient(circle at 88% 18%, rgba(6, 182, 212, 0.07) 0%, transparent 35%),
+        radial-gradient(circle at 50% 85%, rgba(239, 68, 68, 0.06) 0%, transparent 45%),
+        linear-gradient(180deg, #070B14 0%, #0F172A 100%);
+      color: #F8FAFC;
+      font-family: 'Prompt', sans-serif;
+      min-height: 100vh;
+    }
+
+    .tac-grid-bg {
+      background-size: 30px 30px;
+      background-image:
+        linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    }
+
+    .tac-card {
+      background: rgba(15, 23, 42, 0.82);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(148, 163, 184, 0.14);
+      box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.7);
+      transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .tac-card:hover {
+      border-color: rgba(245, 158, 11, 0.32);
+    }
+
+    .tac-border-gold {
+      border: 1px solid rgba(245, 158, 11, 0.5);
+      box-shadow: 0 0 24px rgba(245, 158, 11, 0.14);
+    }
+
+    .tac-border-cyan {
+      border: 1px solid rgba(6, 182, 212, 0.5);
+      box-shadow: 0 0 24px rgba(6, 182, 212, 0.14);
+    }
+
+    .tac-border-crimson {
+      border: 1px solid rgba(239, 68, 68, 0.5);
+      box-shadow: 0 0 24px rgba(239, 68, 68, 0.15);
+    }
+
+    input[type=range].tac-slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 10px;
+      background: linear-gradient(90deg, #334155 0%, #F59E0B 60%, #EF4444 100%);
+      border-radius: 999px;
+      outline: none;
+    }
+
+    input[type=range].tac-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #F59E0B;
+      border: 3px solid #FFF;
+      cursor: pointer;
+      box-shadow: 0 0 10px rgba(245, 158, 11, 0.9);
+    }
+
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #070B14; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #F59E0B; }
+  </style>
+</head>
+<body class="tac-grid-bg antialiased selection:bg-pubgGold selection:text-obsidian pb-14">
+
+  <!-- Toast Notification Container -->
+  <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+  <!-- Custom Confirmation Modal (No native alert/confirm) -->
+  <div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div class="tac-card tac-border-gold rounded-2xl max-w-md w-full p-6 space-y-4">
+      <div class="flex items-center gap-3 text-pubgGold">
+        <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+        <h3 id="confirmModalTitle" class="text-lg font-bold text-white">ยืนยันการทำรายการ</h3>
+      </div>
+      <p id="confirmModalMessage" class="text-slate-300 text-sm leading-relaxed"></p>
+      <div class="flex justify-end gap-3 pt-2">
+        <button id="confirmCancelBtn" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-sm font-medium transition">
+          ยกเลิก
+        </button>
+        <button id="confirmOkBtn" class="px-5 py-2 rounded-xl bg-conqRed hover:bg-red-600 text-white text-sm font-semibold shadow-lg shadow-red-500/20 transition">
+          ยืนยัน
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Shared URL Notification Banner (Appears when opened via #squad=...) -->
+  <div id="sharedUrlBanner" class="hidden bg-gradient-to-r from-cyan-950 via-slate-900 to-amber-950 border-b border-cyan-500/40 px-4 py-2.5 text-xs sm:text-sm">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+      <div class="flex items-center gap-2 text-cyan-300">
+        <i class="fa-solid fa-cloud-arrow-down text-base"></i>
+        <span>คุณกำลังดูข้อมูลทีมที่ถูกแชร์ผ่านลิงก์! กดปุ่ม <strong>"บันทึกทับลงเครื่องนี้"</strong> หากต้องการเซฟข้อมูลชุดนี้ไว้ใช้ต่อ</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button onclick="saveSharedDataToLocal()" class="px-3 py-1 rounded-lg bg-tacGreen hover:bg-emerald-400 text-obsidian font-bold text-xs transition">
+          <i class="fa-solid fa-floppy-disk mr-1"></i>บันทึกทับลงเครื่องนี้
+        </button>
+        <button onclick="dismissSharedBanner()" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs transition">
+          ปิดแจ้งเตือน
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Header & Save/Share Bar -->
+  <header class="border-b border-slate-800/90 bg-obsidian/95 backdrop-blur-md sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 space-y-3">
+
+      <!-- Row 1: Brand + Live Clocks + Explicit Save & Share Buttons -->
+      <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">
+        <!-- Brand -->
+        <div class="flex items-center gap-3">
+          <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-pubgGold via-amber-600 to-conqRed p-0.5 shadow-lg shadow-amber-500/20 shrink-0">
+            <div class="w-full h-full bg-obsidian rounded-[10px] flex items-center justify-center">
+              <i class="fa-solid fa-users-viewfinder text-pubgGold text-lg"></i>
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 flex-wrap">
+              <h1 class="text-base sm:text-xl font-extrabold tracking-tight text-white">
+                PUBG MOBILE <span class="text-pubgGold">4-PLAYER SQUAD HUB</span>
+              </h1>
+              <span id="headerSeasonBadge" class="px-2 py-0.5 text-[11px] font-mono font-bold rounded-full bg-pubgGold/15 text-pubgGold border border-pubgGold/40">
+                C11S33 • 2026
+              </span>
+            </div>
+            <p class="text-[11px] sm:text-xs text-slate-400">
+              ระบบจัดการทีม 4 คน • คำนวณแรงค์ & รีซีซั่น • วางแผนไต่ Conqueror & ยุทธวิธีครบวงจร
+            </p>
+          </div>
+        </div>
+
+        <!-- Timers & Save/Share Action Buttons -->
+        <div class="flex flex-wrap items-center gap-2">
+          <!-- Conqueror Daily Reset Clock -->
+          <div class="bg-slate-900/90 border border-red-500/30 rounded-xl px-2.5 py-1.5 flex items-center gap-2">
+            <i class="fa-solid fa-crown text-conqRed text-xs"></i>
+            <div>
+              <div class="text-[10px] text-slate-400 leading-none">รีเซ็ตป้ายแดง <span id="headerResetClockLabel">(07:20)</span></div>
+              <div id="conquerorCountdown" class="font-mono text-xs sm:text-sm font-bold text-red-400">00:00:00</div>
+            </div>
+          </div>
+
+          <!-- Season End Clock -->
+          <div class="bg-slate-900/90 border border-amber-500/30 rounded-xl px-2.5 py-1.5 flex items-center gap-2">
+            <i class="fa-solid fa-hourglass-half text-pubgGold text-xs"></i>
+            <div>
+              <div class="text-[10px] text-slate-400 leading-none">จบซีซั่นในอีก</div>
+              <div id="seasonCountdown" class="font-mono text-xs sm:text-sm font-bold text-pubgGold">-- วัน</div>
+            </div>
+          </div>
+
+          <!-- Explicit Save Button -->
+          <button onclick="manualSaveSquadData()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-obsidian font-bold text-xs sm:text-sm shadow-lg shadow-emerald-500/20 transition flex items-center gap-1.5">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>บันทึกข้อมูล (Save)</span>
+          </button>
+
+          <!-- Share Squad Link Button -->
+          <button onclick="copyShareableSquadLink()" class="px-3.5 py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/40 text-cyan-300 font-semibold text-xs sm:text-sm transition flex items-center gap-1.5" title="สร้างลิงก์ส่งให้เพื่อนในทีมเปิดดูข้อมูลทั้ง 4 คนได้ทันที">
+            <i class="fa-solid fa-share-nodes"></i>
+            <span>คัดลอกลิงก์แชร์ทีม</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Row 2: 4-Player Squad Switcher Bar + Last Saved Status -->
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
+        <div class="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 md:pb-0">
+          <span class="text-[11px] text-slate-400 font-medium mr-1 shrink-0">
+            <i class="fa-solid fa-user-check text-pubgGold mr-1"></i>เลือกดู/แก้ไข:
+          </span>
+          <div id="squadSelectorBar" class="flex items-center gap-1.5">
+            <!-- Injected via JS: 4 Player Pills -->
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between md:justify-end gap-3 text-[11px] text-slate-400 shrink-0">
+          <span id="lastSavedStatus" class="flex items-center gap-1.5 text-emerald-400">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>บันทึกล่าสุด: อัตโนมัติ</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Row 3: Main Navigation Tabs -->
+      <nav class="flex items-center gap-1.5 overflow-x-auto pt-1 pb-0.5 no-scrollbar">
+        <button onclick="switchTab('tab-squad')" id="btn-tab-squad" class="tab-btn shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 bg-pubgGold text-obsidian shadow-lg shadow-amber-500/20">
+          <i class="fa-solid fa-users"></i>
+          <span>1. ภาพรวมทีม 4 คน & บันทึกแมตช์ตี้</span>
+        </button>
+        <button onclick="switchTab('tab-calc')" id="btn-tab-calc" class="tab-btn shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition flex items-center gap-2 bg-slate-800/80 text-slate-300 hover:bg-slate-800 hover:text-white">
+          <i class="fa-solid fa-calculator text-amber-400"></i>
+          <span>2. คำนวณแรงค์รายคน & รีซีซั่น</span>
+        </button>
+        <button onclick="switchTab('tab-planner')" id="btn-tab-planner" class="tab-btn shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition flex items-center gap-2 bg-slate-800/80 text-slate-300 hover:bg-slate-800 hover:text-white">
+          <i class="fa-solid fa-fire-flame-curved text-conqRed"></i>
+          <span>3. แผนไต่ Conqueror & จำลองแต้ม/เกม</span>
+        </button>
+        <button onclick="switchTab('tab-tactical')" id="btn-tab-tactical" class="tab-btn shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition flex items-center gap-2 bg-slate-800/80 text-slate-300 hover:bg-slate-800 hover:text-white">
+          <i class="fa-solid fa-parachute-box text-cyan-400"></i>
+          <span>4. ยุทธวิธี จุดโดดร่ม & คลังโค้ดความไว</span>
+        </button>
+        <button onclick="switchTab('tab-promo')" id="btn-tab-promo" class="tab-btn shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition flex items-center gap-2 bg-slate-800/80 text-slate-300 hover:bg-slate-800 hover:text-white">
+          <i class="fa-solid fa-medal text-emerald-400"></i>
+          <span>5. สอบเลื่อนขั้น 2026 • 6 โหมด & ซิงค์ทีม</span>
+        </button>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+
+    <!-- =================================================================== -->
+    <!-- TAB 1: ภาพรวมทีม 4 คน & บันทึกผลแมตช์ทั้งตี้ (SQUAD COMMAND CENTER)     -->
+    <!-- =================================================================== -->
+    <section id="tab-squad" class="tab-panel space-y-6">
+
+      <!-- Squad KPI Summary Banner -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+        <div class="tac-card rounded-2xl p-4 border-l-4 border-l-pubgGold">
+          <div class="text-xs text-slate-400 flex items-center justify-between">
+            <span>แต้มเฉลี่ยทั้งตี้ (Squad Avg)</span>
+            <i class="fa-solid fa-chart-simple text-pubgGold"></i>
+          </div>
+          <div id="squadAvgPoints" class="font-mono text-2xl font-extrabold text-white mt-1">5,480</div>
+          <div id="squadAvgRankLabel" class="text-[11px] text-amber-300 mt-0.5">ระดับเฉลี่ย: Ace Dominator</div>
+        </div>
+
+        <div class="tac-card rounded-2xl p-4 border-l-4 border-l-conqRed">
+          <div class="text-xs text-slate-400 flex items-center justify-between">
+            <span>แต้มสูงสุดในทีม (Squad MVP)</span>
+            <i class="fa-solid fa-crown text-conqRed"></i>
+          </div>
+          <div id="squadMvpName" class="text-lg font-extrabold text-amber-400 mt-1 truncate">7MB-NUEA</div>
+          <div id="squadMvpPts" class="font-mono text-xs text-slate-300 mt-0.5">5,720 แต้ม (ขาด 130 ถึง Top 500)</div>
+        </div>
+
+        <div class="tac-card rounded-2xl p-4 border-l-4 border-l-emerald-400">
+          <div class="text-xs text-slate-400 flex items-center justify-between">
+            <span>ใกล้เลื่อนขั้นคนถัดไป</span>
+            <i class="fa-solid fa-bolt text-emerald-400"></i>
+          </div>
+          <div id="squadClosestUpName" class="text-lg font-extrabold text-emerald-300 mt-1 truncate">-</div>
+          <div id="squadClosestUpDesc" class="text-xs text-slate-300 mt-0.5">-</div>
+        </div>
+
+        <div class="tac-card rounded-2xl p-4 border-l-4 border-l-cyan-400">
+          <div class="text-xs text-slate-400 flex items-center justify-between">
+            <span>สถานะจับคู่แรงค์ & การ์ดกันลด</span>
+            <i class="fa-solid fa-shield-halved text-cyan-400"></i>
+          </div>
+          <div id="squadQueueStatus" class="text-base font-extrabold text-cyan-300 mt-1">✅ ลงทีม 4 คนได้ปกติ</div>
+          <div id="squadTotalCards" class="text-xs text-slate-300 mt-0.5">การ์ดป้องกันแต้มรวมทั้งตี้: 10 ใบ</div>
+        </div>
+      </div>
+
+      <!-- 4-Player Squad Cards Grid (Editable Directly or Switch to Full Profile) -->
+      <div class="space-y-3">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-people-group text-pubgGold"></i>
+              <span>สถานะสมาชิกในทีมทั้ง 4 คน (แยกโปรไฟล์อิสระ แก้ไขชื่อและแต้มได้ทันที)</span>
+            </h2>
+            <p class="text-xs text-slate-400">พิมพ์แก้ชื่อ ตำแหน่ง หรือปรับแต้มของการ์ดแต่ละคนได้เลย แล้วกดปุ่ม <strong>บันทึกข้อมูล (Save)</strong> ด้านบน</p>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-slate-400">เกณฑ์ Top 500 วันนี้:</span>
+            <input
+              id="squadConqCutoffInput"
+              type="number"
+              min="4200"
+              max="9999"
+              value="5850"
+              oninput="handleGlobalConqChange(this.value)"
+              class="w-24 bg-obsidian border border-red-500/50 focus:border-conqRed rounded-lg px-2.5 py-1 font-mono text-sm font-bold text-red-400 text-center outline-none"
+            />
+          </div>
+        </div>
+
+        <div id="squadCardsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <!-- 4 Player Cards Injected via JS -->
+        </div>
+      </div>
+
+      <!-- Squad Batch Match Updater & Match History -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left: Batch Match Updater (5 cols) -->
+        <div class="lg:col-span-5 tac-card tac-border-gold rounded-2xl p-5 space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-gamepad text-pubgGold"></i>
+                <span>บันทึกผลแมตช์ทั้งตี้พร้อมกัน (4 คนในคลิกเดียว)</span>
+              </h3>
+              <p class="text-xs text-slate-400">จบ 1 เกม กรอกแต้มบวก/ลบและ Kills ของทุกคนแล้วกดบันทึกพร้อมกันได้เลย</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2.5">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">แผนที่ (Map)</label>
+              <select id="batchMap" class="w-full bg-obsidian border border-slate-700 rounded-xl px-2.5 py-2 text-xs font-semibold text-white outline-none">
+                <option value="Erangel">Erangel</option>
+                <option value="Miramar">Miramar</option>
+                <option value="Rondo">Rondo</option>
+                <option value="Livik">Livik</option>
+                <option value="Sanhok">Sanhok</option>
+                <option value="Vikendi">Vikendi</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">อันดับทีม (#)</label>
+              <input id="batchPlacement" type="number" min="1" max="100" value="1" class="w-full bg-obsidian border border-slate-700 rounded-xl px-2.5 py-2 font-mono text-sm font-bold text-amber-300 text-center outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">โน้ตสั้นๆ</label>
+              <input id="batchNote" type="text" placeholder="เช่น กินไก่เมืองหลัก" class="w-full bg-obsidian border border-slate-700 rounded-xl px-2.5 py-2 text-xs text-white outline-none" />
+            </div>
+          </div>
+
+          <!-- Per-player inputs for the batch match -->
+          <div class="space-y-2">
+            <div class="grid grid-cols-12 text-[11px] text-slate-400 px-2">
+              <div class="col-span-5">สมาชิกในตี้ (ติ๊กคนที่ลงเล่น)</div>
+              <div class="col-span-3 text-center">Kills ที่ทำได้</div>
+              <div class="col-span-4 text-center">แต้มที่ได้ (+/-)</div>
+            </div>
+            <div id="batchPlayersRows" class="space-y-2">
+              <!-- Populated via JS -->
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-2 pt-1">
+            <button onclick="fillBatchPreset(20)" class="px-2.5 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-[11px] text-emerald-300 transition">
+              🍗 ตั้งค่าทุกคน +20
+            </button>
+            <button onclick="fillBatchPreset(12)" class="px-2.5 py-1 rounded-lg bg-amber-500/15 hover:bg-amber-500/25 border border-amber-500/30 text-[11px] text-amber-300 transition">
+              🔥 ตั้งค่าทุกคน +12
+            </button>
+            <button onclick="fillBatchPreset(0)" class="px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-[11px] text-slate-300 transition">
+              🛡️ ตั้งค่า 0 (ใช้การ์ดกันลด)
+            </button>
+          </div>
+
+          <button onclick="submitSquadBatchMatch()" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-pubgGold to-amber-600 hover:from-amber-400 hover:to-amber-500 text-obsidian font-extrabold text-sm shadow-lg shadow-amber-500/20 transition flex items-center justify-center gap-2">
+            <i class="fa-solid fa-floppy-disk"></i>
+            <span>อัปเดตแต้ม & บันทึกผลแมตช์ทั้งตี้ทันที</span>
+          </button>
+        </div>
+
+        <!-- Right: Squad Match History & Analytics (7 cols) -->
+        <div class="lg:col-span-7 tac-card rounded-2xl p-5 flex flex-col justify-between space-y-4">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <h3 class="text-base font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-clock-rotate-left text-cyan-400"></i>
+                <span>ประวัติการลงสนามของทีม (Squad Match Log)</span>
+              </h3>
+              <p class="text-xs text-slate-400">บันทึกผลการเล่นย้อนหลังของสมาชิกในทีม พร้อมคำนวณแต้มบวกสุทธิ</p>
+            </div>
+            <button onclick="clearSquadMatchHistory()" class="px-3 py-1.5 rounded-lg bg-red-500/15 hover:bg-red-500/25 border border-red-500/30 text-red-300 text-xs font-medium transition self-start sm:self-auto">
+              <i class="fa-solid fa-trash-can mr-1"></i>ล้างประวัติแมตช์
+            </button>
+          </div>
+
+          <div class="overflow-x-auto max-h-80">
+            <table class="w-full text-left border-collapse">
+              <thead class="sticky top-0 bg-slate-900 z-10">
+                <tr class="border-b border-slate-800 text-[11px] text-slate-400 uppercase">
+                  <th class="py-2.5 px-3">เวลา / แผนที่</th>
+                  <th class="py-2.5 px-3 text-center">อันดับ</th>
+                  <th class="py-2.5 px-3 text-center">คิลรวมตี้</th>
+                  <th class="py-2.5 px-3">สรุปแต้มรายคนในแมตช์</th>
+                  <th class="py-2.5 px-3">หมายเหตุ</th>
+                  <th class="py-2.5 px-3 text-center">ลบ</th>
+                </tr>
+              </thead>
+              <tbody id="squadHistoryTableBody" class="divide-y divide-slate-800/60 text-xs">
+                <!-- Populated via JS -->
+              </tbody>
+            </table>
+          </div>
+
+          <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3 flex flex-wrap items-center justify-between gap-2 text-xs">
+            <span class="text-slate-400">
+              <i class="fa-solid fa-lightbulb text-pubgGold mr-1"></i>
+              <strong>ทริคแชร์ให้เพื่อนในตี้:</strong> หลังกดบันทึกแมตช์แล้ว กดปุ่ม <strong>"คัดลอกลิงก์แชร์ทีม"</strong> ด้านบนส่งเข้ากลุ่ม Line/Discord เพื่อให้เพื่อนเห็นแต้มล่าสุดของทุกคนได้ทันที!
+            </span>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 2: คำนวณแรงค์รายคน & รีซีซั่น (INDIVIDUAL PROFILE & CALCULATOR)    -->
+    <!-- =================================================================== -->
+    <section id="tab-calc" class="tab-panel hidden space-y-6">
+
+      <!-- Player Profile Editor Banner -->
+      <div class="tac-card tac-border-cyan rounded-2xl p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div class="flex items-center gap-2.5">
+            <span id="calcPlayerSlotBadge" class="px-3 py-1 rounded-xl font-mono text-xs font-extrabold bg-pubgGold text-obsidian">
+              SLOT #1
+            </span>
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-white">
+                ข้อมูลโปรไฟล์ประจำตัวของ: <span id="calcActivePlayerTitle" class="text-pubgGold">7MB-NUEA</span>
+              </h2>
+              <p class="text-xs text-slate-400">คลิกสลับชื่อเพื่อนทั้ง 4 คนได้จากแถบด้านบน ข้อมูลของแต่ละคนแยกกัน 100% ไม่ทับกัน</p>
+            </div>
+          </div>
+          <button onclick="manualSaveSquadData()" class="px-4 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-obsidian font-bold text-xs transition self-start sm:self-auto">
+            <i class="fa-solid fa-floppy-disk mr-1"></i>บันทึกโปรไฟล์นี้
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+          <div class="lg:col-span-2">
+            <label class="block text-[11px] text-slate-400 mb-1">ชื่อในเกม (IGN) / ชื่อเรียกในตี้</label>
+            <input id="profNameInput" type="text" oninput="updateActivePlayerProfile()" class="w-full bg-obsidian border border-slate-700 focus:border-pubgGold rounded-xl px-3 py-2 text-sm font-bold text-white outline-none" placeholder="เช่น 7MB-NUEA" />
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">UID ในเกม (กดคัดลอกได้)</label>
+            <div class="flex gap-1">
+              <input id="profUidInput" type="text" oninput="updateActivePlayerProfile()" class="w-full bg-obsidian border border-slate-700 focus:border-pubgGold rounded-xl px-2.5 py-2 font-mono text-xs text-amber-300 outline-none" placeholder="5123456789" />
+              <button onclick="copyActivePlayerUid()" title="คัดลอก UID" class="px-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs">
+                <i class="fa-regular fa-copy"></i>
+              </button>
+            </div>
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">ตำแหน่งหลักในทีม (Role)</label>
+            <select id="profRoleInput" onchange="updateActivePlayerProfile()" class="w-full bg-obsidian border border-slate-700 focus:border-pubgGold rounded-xl px-2.5 py-2 text-xs font-semibold text-cyan-300 outline-none">
+              <option value="IGL / สั่งการ">👑 IGL / สั่งการ</option>
+              <option value="Fragger / ตัวชน">🔥 Fragger / ตัวชน</option>
+              <option value="Support / ซัพพอร์ต">🛡️ Support / ซัพพอร์ต</option>
+              <option value="Sniper / แนวหลัง">🎯 Sniper / แนวหลัง</option>
+              <option value="All-Rounder / รอบด้าน">⚡ All-Rounder / รอบด้าน</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">K/D Ratio & Win Rate (%)</label>
+            <div class="grid grid-cols-2 gap-1.5">
+              <input id="profKdInput" type="number" step="0.1" min="0" max="50" oninput="updateActivePlayerProfile()" class="w-full bg-obsidian border border-slate-700 rounded-xl px-2 py-2 font-mono text-xs font-bold text-emerald-400 text-center outline-none" title="K/D Ratio" />
+              <input id="profWinRateInput" type="number" step="1" min="0" max="100" oninput="updateActivePlayerProfile()" class="w-full bg-obsidian border border-slate-700 rounded-xl px-2 py-2 font-mono text-xs font-bold text-sky-400 text-center outline-none" title="Win Rate %" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">การ์ดป้องกันแรงค์ (ใบ)</label>
+            <input id="profCardsInput" type="number" min="0" max="99" oninput="updateActivePlayerProfile()" class="w-full bg-obsidian border border-slate-700 focus:border-emerald-400 rounded-xl px-3 py-2 font-mono text-sm font-bold text-emerald-300 text-center outline-none" />
+          </div>
+        </div>
+      </div>
+
+      <!-- 3-Column Rank & Reset Calculator for Active Player -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Column 1: Point Input & Controls (4 cols) -->
+        <div class="lg:col-span-4 tac-card tac-border-gold rounded-2xl p-5 flex flex-col justify-between space-y-4">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 class="text-base font-bold text-white">กรอกแต้มแรงค์ปัจจุบัน</h3>
+              <button onclick="undoPlayerPoints()" id="undoPointBtn" class="text-xs text-amber-400 hover:underline hidden">
+                <i class="fa-solid fa-rotate-left mr-1"></i>ย้อนกลับค่าเดิม
+              </button>
+            </div>
+
+            <div>
+              <label class="block text-xs text-slate-400 mb-1">โหมดที่กำลังคำนวณของสมาชิกคนนี้</label>
+              <select id="calcModeSelect" onchange="handlePlayerModeSelect(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs sm:text-sm font-semibold text-white outline-none">
+                <option value="tpp_squad">TPP Squad (มุมมองที่ 3 - ทีม 4 คน)</option>
+                <option value="tpp_duo">TPP Duo (มุมมองที่ 3 - คู่ 2 คน)</option>
+                <option value="tpp_solo">TPP Solo (มุมมองที่ 3 - ลุยเดี่ยว)</option>
+                <option value="fpp_squad">FPP Squad (มุมมองที่ 1 - ทีม 4 คน)</option>
+                <option value="fpp_duo">FPP Duo (มุมมองที่ 1 - คู่ 2 คน)</option>
+                <option value="fpp_solo">FPP Solo (มุมมองที่ 1 - ลุยเดี่ยว)</option>
+              </select>
+            </div>
+
+            <div class="bg-slate-900/90 border border-amber-500/30 rounded-2xl p-4 space-y-3">
+              <div class="flex justify-between text-xs">
+                <span class="text-amber-300 font-semibold">แต้มปัจจุบัน</span>
+                <span class="font-mono text-slate-400">1,000 - 9,999</span>
+              </div>
+              <input
+                id="currentPointsInput"
+                type="number"
+                min="1000"
+                max="9999"
+                oninput="handleActivePlayerPointsInput(this.value)"
+                class="w-full bg-obsidian border-2 border-pubgGold rounded-xl px-4 py-2.5 text-3xl font-mono font-extrabold text-pubgGold text-center outline-none"
+              />
+              <input
+                id="currentPointsSlider"
+                type="range"
+                min="1000"
+                max="8000"
+                step="5"
+                oninput="handleActivePlayerPointsInput(this.value)"
+                class="tac-slider"
+              />
+
+              <div class="grid grid-cols-4 gap-1.5 font-mono text-xs pt-1">
+                <button onclick="adjustActivePlayerPoints(-30)" class="py-1.5 rounded-lg bg-red-950/70 hover:bg-red-900 border border-red-500/30 text-red-300 font-bold">-30</button>
+                <button onclick="adjustActivePlayerPoints(-15)" class="py-1.5 rounded-lg bg-red-950/70 hover:bg-red-900 border border-red-500/30 text-red-300 font-bold">-15</button>
+                <button onclick="adjustActivePlayerPoints(-5)" class="py-1.5 rounded-lg bg-red-950/70 hover:bg-red-900 border border-red-500/30 text-red-300 font-bold">-5</button>
+                <button onclick="adjustActivePlayerPoints(5)" class="py-1.5 rounded-lg bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-500/30 text-emerald-300 font-bold">+5</button>
+                <button onclick="adjustActivePlayerPoints(10)" class="py-1.5 rounded-lg bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-500/30 text-emerald-300 font-bold">+10</button>
+                <button onclick="adjustActivePlayerPoints(15)" class="py-1.5 rounded-lg bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-500/30 text-emerald-300 font-bold">+15</button>
+                <button onclick="adjustActivePlayerPoints(25)" class="py-1.5 rounded-lg bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-500/30 text-emerald-300 font-bold">+25</button>
+                <button onclick="adjustActivePlayerPoints(100)" class="py-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 font-bold">+100</button>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3">
+                <label class="block text-[11px] text-red-300 mb-1">เกณฑ์ Top 500 เซิร์ฟ</label>
+                <input id="conqThresholdInput" type="number" min="4200" max="9999" oninput="handleGlobalConqChange(this.value)" class="w-full bg-obsidian border border-red-500/40 rounded-lg px-2.5 py-1.5 font-mono text-base font-bold text-red-400 outline-none" />
+              </div>
+              <div class="bg-slate-900/70 border border-slate-800 rounded-xl p-3">
+                <label class="block text-[11px] text-emerald-300 mb-1">แต้มบวกเฉลี่ย / เกม</label>
+                <input id="avgPtsPerMatchInput" type="number" min="1" max="100" oninput="handleActivePlayerAvgPts(this.value)" class="w-full bg-obsidian border border-emerald-500/40 rounded-lg px-2.5 py-1.5 font-mono text-base font-bold text-emerald-400 outline-none" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Column 2: Current Rank Status (4 cols) -->
+        <div class="lg:col-span-4 tac-card rounded-2xl p-5 flex flex-col justify-between space-y-4">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 class="text-base font-bold text-white">สถานะแรงค์ปัจจุบัน</h3>
+              <span id="calcRoleBadge" class="text-xs px-2.5 py-0.5 rounded-full bg-cyan-500/15 text-cyan-300 border border-cyan-500/30">IGL</span>
+            </div>
+
+            <div class="flex flex-col items-center text-center py-1">
+              <div id="rankEmblemContainer" class="w-24 h-24 flex items-center justify-center mb-2"></div>
+              <div id="currentRankTitle" class="text-2xl font-extrabold text-pubgGold">-</div>
+              <div id="currentStarVisual" class="text-xs font-mono text-amber-300 mt-1 px-3 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20">-</div>
+            </div>
+
+            <div class="bg-slate-900/85 border border-slate-800 rounded-xl p-3.5 space-y-2">
+              <div class="flex justify-between text-xs">
+                <span class="text-slate-400">ขั้นถัดไป: <strong id="nextRankName" class="text-white">-</strong></span>
+                <span id="nextRankTargetPts" class="font-mono text-pubgGold font-bold">-</span>
+              </div>
+              <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden">
+                <div id="nextRankProgressBar" class="h-full bg-gradient-to-r from-amber-500 to-emerald-400 transition-all duration-300" style="width: 50%"></div>
+              </div>
+              <div class="flex justify-between text-xs pt-1">
+                <span>ขาดอีก <strong id="ptsNeededNext" class="font-mono text-amber-400 text-sm">-</strong> แต้ม</span>
+                <span>ประมาณ <strong id="matchesNeededNext" class="font-mono text-emerald-400 text-sm">-</strong> เกม</span>
+              </div>
+            </div>
+
+            <div id="promoEligibilityAlert" class="rounded-xl p-3 border text-xs bg-amber-500/10 border-amber-500/30 text-slate-300"></div>
+          </div>
+
+          <div id="conquerorStatusBanner" class="rounded-xl p-3.5 border"></div>
+        </div>
+
+        <!-- Column 3: Season Reset Result (4 cols) -->
+        <div class="lg:col-span-4 tac-card rounded-2xl p-5 flex flex-col justify-between space-y-4">
+          <div class="space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+              <h3 class="text-base font-bold text-white">ผลลัพธ์หลังรีแรงค์ซีซั่นใหม่</h3>
+              <span class="text-xs font-mono px-2 py-0.5 rounded bg-sky-500/15 text-sky-300 border border-sky-500/30">RESET SIM</span>
+            </div>
+
+            <div class="bg-slate-900/90 border border-sky-500/30 rounded-2xl p-4 flex items-center gap-4">
+              <div id="resetEmblemContainer" class="w-16 h-16 shrink-0"></div>
+              <div>
+                <div class="text-xs text-sky-300">แรงค์เริ่มต้นซีซั่นหน้า</div>
+                <div id="postResetRankName" class="text-2xl font-extrabold text-white">-</div>
+                <div class="text-xs text-slate-400">แต้มเริ่ม: <strong id="postResetPoints" class="font-mono text-sky-400 text-sm">-</strong></div>
+              </div>
+            </div>
+
+            <div class="grid grid-cols-2 gap-2.5">
+              <div class="bg-slate-900/75 border border-slate-800 rounded-xl p-3">
+                <div class="text-[11px] text-slate-400">แต้มที่ถูกลดลง</div>
+                <div id="pointsDroppedOnReset" class="font-mono text-base font-bold text-red-400 mt-0.5">-</div>
+                <div id="pointsDropPercent" class="text-[10px] text-slate-400">-</div>
+              </div>
+              <div class="bg-slate-900/75 border border-slate-800 rounded-xl p-3">
+                <div class="text-[11px] text-slate-400">ขยับเพดานรีแรงค์</div>
+                <div id="ptsToMaxResetBracket" class="font-mono text-base font-bold text-emerald-400 mt-0.5">-</div>
+                <div id="maxResetBracketHint" class="text-[10px] text-slate-400">-</div>
+              </div>
+            </div>
+
+            <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 space-y-2 text-xs">
+              <div class="font-semibold text-amber-300">แผนทวงคืนแรงค์ในซีซั่นหน้า:</div>
+              <div class="flex justify-between border-b border-slate-800 pb-1.5">
+                <span class="text-slate-300">ขึ้น Ace (4,200):</span>
+                <span class="font-mono"><strong id="newSeasonToAcePts" class="text-white">-</strong> (<span id="newSeasonToAceMatches" class="text-emerald-400">-</span> เกม)</span>
+              </div>
+              <div class="flex justify-between border-b border-slate-800 pb-1.5">
+                <span class="text-slate-300">ขึ้น Ace Master (4,700):</span>
+                <span class="font-mono"><strong id="newSeasonToMasterPts" class="text-white">-</strong> (<span id="newSeasonToMasterMatches" class="text-emerald-400">-</span> เกม)</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-slate-300">ขึ้น Ace Dominator (5,200):</span>
+                <span class="font-mono"><strong id="newSeasonToDomPts" class="text-white">-</strong> (<span id="newSeasonToDomMatches" class="text-emerald-400">-</span> เกม)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Milestone Tracker Table -->
+      <div class="tac-card rounded-2xl p-5 space-y-3">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-flag-checkered text-pubgGold"></i>
+          <span>ตารางเช็คระยะห่างแต่ละเป้าหมายแรงค์ใหญ่ของ <span id="milestonePlayerName" class="text-pubgGold">7MB-NUEA</span></span>
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs sm:text-sm">
+            <thead>
+              <tr class="border-b border-slate-800 text-[11px] text-slate-400 uppercase">
+                <th class="py-2.5 px-3">เป้าหมายแรงค์ (Milestone)</th>
+                <th class="py-2.5 px-3 text-right">แต้มเป้าหมาย</th>
+                <th class="py-2.5 px-3 text-center">สถานะ</th>
+                <th class="py-2.5 px-3 text-right">ขาด / เกิน</th>
+                <th class="py-2.5 px-3 text-right">จำนวนเกม</th>
+                <th class="py-2.5 px-3">กติกาพิเศษปี 2026</th>
+                <th class="py-2.5 px-3 text-right">รีซีซั่นได้</th>
+              </tr>
+            </thead>
+            <tbody id="milestoneTableBody" class="divide-y divide-slate-800/60"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 3: แผนไต่ CONQUEROR & เครื่องคิดเลขจำลองแต้มต่อแมตช์                -->
+    <!-- =================================================================== -->
+    <section id="tab-planner" class="tab-panel hidden space-y-6">
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left: Conqueror Daily Push Planner (7 cols) -->
+        <div class="lg:col-span-7 tac-card tac-border-crimson rounded-2xl p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-fire-flame-curved text-conqRed"></i>
+                <span>ตารางวางแผนไต่ Conqueror รายวันของ: <span id="planPlayerName" class="text-pubgGold">7MB-NUEA</span></span>
+              </h2>
+              <p class="text-xs text-slate-400">คำนวณรวมอัตราแต้มเซิร์ฟไหลรายวัน (Server Inflation) + แต้มเซฟตี้กันหลุดก่อน 07:20 น.</p>
+            </div>
+            <button onclick="syncPlannerFromActivePlayer()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-amber-300 text-xs border border-amber-500/30 transition">
+              <i class="fa-solid fa-rotate mr-1"></i>ดึงแต้มล่าสุดของคนนี้
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">แต้มเริ่มต้น</label>
+              <input id="planCurrentPts" type="number" oninput="calculateConquerorPlan()" class="w-full bg-obsidian border border-slate-700 rounded-xl px-3 py-1.5 font-mono text-sm font-bold text-pubgGold outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Top 500 วันนี้</label>
+              <input id="planServerCutoff" type="number" oninput="calculateConquerorPlan()" class="w-full bg-obsidian border border-slate-700 rounded-xl px-3 py-1.5 font-mono text-sm font-bold text-conqRed outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">เซิร์ฟไหล (แต้ม/วัน)</label>
+              <input id="planDailyInflation" type="number" value="25" oninput="calculateConquerorPlan()" class="w-full bg-obsidian border border-slate-700 rounded-xl px-3 py-1.5 font-mono text-sm font-bold text-amber-300 outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">จำนวนวันที่ดัน</label>
+              <input id="planTargetDays" type="number" min="1" max="30" value="3" oninput="calculateConquerorPlan()" class="w-full bg-obsidian border border-slate-700 rounded-xl px-3 py-1.5 font-mono text-sm font-bold text-cyan-300 outline-none" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-3 gap-3">
+            <div class="bg-slate-900/90 border border-red-500/30 rounded-xl p-3">
+              <div class="text-[11px] text-slate-400">เป้าแต้มวันสุดท้าย</div>
+              <div id="planFinalTargetPts" class="font-mono text-lg font-extrabold text-conqRed">-</div>
+            </div>
+            <div class="bg-slate-900/90 border border-amber-500/30 rounded-xl p-3">
+              <div class="text-[11px] text-slate-400">ต้องบวกวันละ</div>
+              <div id="planDailyPtsQuota" class="font-mono text-lg font-extrabold text-pubgGold">-</div>
+            </div>
+            <div class="bg-slate-900/90 border border-emerald-500/30 rounded-xl p-3">
+              <div class="text-[11px] text-slate-400">จำนวนเกม/วัน</div>
+              <div id="planMatchesPerDay" class="font-mono text-lg font-extrabold text-emerald-400">-</div>
+            </div>
+          </div>
+
+          <div class="overflow-x-auto max-h-64">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="border-b border-slate-800 text-slate-400 uppercase">
+                  <th class="py-2 px-2.5">วันที่</th>
+                  <th class="py-2 px-2.5 text-right">Top 500 คาดการณ์</th>
+                  <th class="py-2 px-2.5 text-right">โควต้าต่อวัน</th>
+                  <th class="py-2 px-2.5 text-right">เป้าสะสมจบวัน</th>
+                  <th class="py-2 px-2.5 text-right">จำนวนเกม</th>
+                </tr>
+              </thead>
+              <tbody id="plannerScheduleBody" class="divide-y divide-slate-800/60"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Right: Single Match Point Simulator (5 cols) -->
+        <div class="lg:col-span-5 tac-card tac-border-gold rounded-2xl p-5 flex flex-col justify-between space-y-4">
+          <div class="space-y-3">
+            <div class="border-b border-slate-800 pb-3">
+              <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-crosshairs text-pubgGold"></i>
+                <span>เครื่องคิดเลขจำลองแต้มที่จะได้ต่อแมตช์ (Match Point Simulator)</span>
+              </h2>
+              <p class="text-xs text-slate-400">ประเมินแต้มแรงค์ที่จะบวก/ลบในแต่ละเกมจากเวลาเอาชีวิตรอด อันดับ และจำนวนคิล</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-1">ระดับแรงค์ขณะเล่น</label>
+                <select id="simTierGroup" onchange="runMatchPointSimulator()" class="w-full bg-obsidian border border-slate-700 rounded-xl px-3 py-2 text-xs font-semibold text-white outline-none">
+                  <option value="Gold_Plat">Gold – Platinum</option>
+                  <option value="Diamond">Diamond</option>
+                  <option value="Crown">Crown</option>
+                  <option value="Ace" selected>Ace (4,200 - 4,699)</option>
+                  <option value="AceMaster">Ace Master (4,700 - 5,199)</option>
+                  <option value="AceDom">Ace Dominator (5,200+)</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-1">อันดับที่จบ (#1 - #100)</label>
+                <input id="simPlacement" type="number" min="1" max="100" value="2" oninput="runMatchPointSimulator()" class="w-full bg-obsidian border border-slate-700 rounded-xl px-3 py-2 font-mono text-sm font-bold text-amber-300 text-center outline-none" />
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-1">เวลารอดชีวิต (นาที)</label>
+                <input id="simSurvivalMin" type="number" min="1" max="35" value="24" oninput="runMatchPointSimulator()" class="w-full bg-obsidian border border-slate-700 rounded-xl px-3 py-2 font-mono text-sm font-bold text-emerald-400 text-center outline-none" />
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-1">จำนวน Kills</label>
+                <input id="simKills" type="number" min="0" max="40" value="5" oninput="runMatchPointSimulator()" class="w-full bg-obsidian border border-slate-700 rounded-xl px-3 py-2 font-mono text-sm font-bold text-red-400 text-center outline-none" />
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-1">ดาเมจที่ทำได้ (Damage)</label>
+                <input id="simDamage" type="number" min="0" max="5000" step="50" value="750" oninput="runMatchPointSimulator()" class="w-full bg-obsidian border border-slate-700 rounded-xl px-3 py-2 font-mono text-sm font-bold text-sky-400 text-center outline-none" />
+              </div>
+              <div>
+                <label class="block text-[11px] text-slate-400 mb-1">ชุบเพื่อน / ซัพพอร์ต (ครั้ง)</label>
+                <input id="simRevives" type="number" min="0" max="15" value="1" oninput="runMatchPointSimulator()" class="w-full bg-obsidian border border-slate-700 rounded-xl px-3 py-2 font-mono text-sm font-bold text-cyan-300 text-center outline-none" />
+              </div>
+            </div>
+
+            <!-- Simulated Output Box -->
+            <div class="bg-slate-900/90 border border-amber-500/40 rounded-2xl p-4 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-xs text-slate-400">แต้มรวมสุทธิคาดการณ์:</span>
+                <span id="simTotalPts" class="font-mono text-2xl font-extrabold text-emerald-400">+18 แต้ม</span>
+              </div>
+              <div class="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800 text-center text-[11px]">
+                <div>
+                  <span class="text-slate-400 block">แต้มรอดชีวิต</span>
+                  <strong id="simSurvPts" class="font-mono text-white">+11</strong>
+                </div>
+                <div>
+                  <span class="text-slate-400 block">แต้มคิล & ดาเมจ</span>
+                  <strong id="simKillPts" class="font-mono text-white">+6</strong>
+                </div>
+                <div>
+                  <span class="text-slate-400 block">โบนัสซัพพอร์ต</span>
+                  <strong id="simSupportPts" class="font-mono text-white">+1</strong>
+                </div>
+              </div>
+              <div id="simCardAdvice" class="text-[11px] text-amber-300 pt-1"></div>
+            </div>
+          </div>
+
+          <button onclick="applySimulatedPtsToActivePlayer()" class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 border border-pubgGold/40 text-amber-300 font-semibold text-xs transition">
+            <i class="fa-solid fa-plus-circle mr-1"></i>นำแต้มจำลองนี้ไปบวกให้ <span id="simApplyPlayerName">7MB-NUEA</span> ทันที
+          </button>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 4: ยุทธวิธีทีม, สุ่มจุดโดดร่ม & คลังโค้ดตั้งค่าความไว 4 คน             -->
+    <!-- =================================================================== -->
+    <section id="tab-tactical" class="tab-panel hidden space-y-6">
+
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left: Drop Spot Roulette & Tactical Map Guide (6 cols) -->
+        <div class="lg:col-span-6 tac-card tac-border-cyan rounded-2xl p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-map-location-dot text-cyan-400"></i>
+                <span>สุ่มจุดโดดร่ม & แผนที่ยุทธวิธี (Drop Spot Roulette)</span>
+              </h2>
+              <p class="text-xs text-slate-400">เลือกแผนที่และสไตล์การเล่นของตี้ เพื่อดูจุดฟาร์ม จุดหารถ และสุ่มเมืองโดดร่ม</p>
+            </div>
+            <button onclick="rollRandomDropSpot()" class="px-4 py-2 rounded-xl bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-obsidian font-extrabold text-xs shadow-lg shadow-cyan-500/20 transition flex items-center gap-1.5">
+              <i class="fa-solid fa-dice text-sm"></i>
+              <span>สุ่มเมืองโดดร่มให้ตี้!</span>
+            </button>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">เลือกแผนที่ (Map)</label>
+              <select id="tacMapSelect" onchange="renderTacticalDropSpots()" class="w-full bg-obsidian border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white outline-none">
+                <option value="Erangel">Erangel (8x8 km)</option>
+                <option value="Miramar">Miramar (8x8 km)</option>
+                <option value="Rondo">Rondo (8x8 km)</option>
+                <option value="Livik">Livik (2x2 km)</option>
+                <option value="Sanhok">Sanhok (4x4 km)</option>
+                <option value="Vikendi">Vikendi (6x6 km)</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">สไตล์การโดดของตี้</label>
+              <select id="tacRiskFilter" onchange="renderTacticalDropSpots()" class="w-full bg-obsidian border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-amber-300 outline-none">
+                <option value="ALL">แสดงทุกสไตล์</option>
+                <option value="SAFE">🛡️ Safe / เน้นเซฟแต้มหารถเข้าวง</option>
+                <option value="BALANCED">⚖️ Balanced / ฟาร์มตึงมีไฟต์พอดี</option>
+                <option value="HOT">🔥 Hot Drop / เมืองเดือดวัดคม</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Highlighted Rolled Drop Spot -->
+          <div id="rolledSpotBanner" class="bg-gradient-to-r from-cyan-950/80 via-slate-900 to-slate-900 border border-cyan-400/50 rounded-2xl p-4 flex items-center justify-between gap-3">
+            <div>
+              <span class="text-[11px] text-cyan-300 font-semibold uppercase">🎯 เป้าหมายจุดโดดร่มที่แนะนำตาต่อไป:</span>
+              <div id="rolledSpotName" class="text-xl font-extrabold text-white mt-0.5">Yasnaya Polyana (Erangel)</div>
+              <div id="rolledSpotTip" class="text-xs text-slate-300 mt-0.5">ของฟาร์มครบ 4 คน มีโรงรถหลัก 2 จุด หมุนเข้าวงกลางง่าย</div>
+            </div>
+            <span id="rolledSpotBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40 shrink-0">
+              BALANCED
+            </span>
+          </div>
+
+          <!-- Drop Spots List -->
+          <div id="dropSpotsList" class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 max-h-60 overflow-y-auto pr-1">
+            <!-- Injected via JS -->
+          </div>
+        </div>
+
+        <!-- Right: Squad Endgame Utility & Backpack Quota (6 cols) -->
+        <div class="lg:col-span-6 tac-card rounded-2xl p-5 space-y-4">
+          <div class="border-b border-slate-800 pb-3">
+            <h2 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-suitcase-medical text-emerald-400"></i>
+              <span>โควต้าของในกระเป๋าทั้ง 4 ตำแหน่งสำหรับบีบวงสุดท้าย (Endgame Loadout)</span>
+            </h2>
+            <p class="text-xs text-slate-400">การจัดระเบิดควัน (Smoke) ระเบิดมือ และยาตามหน้าที่ของสมาชิกทั้ง 4 คนในตี้</p>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 space-y-1.5">
+              <div class="text-xs font-bold text-amber-400 flex items-center justify-between">
+                <span>👑 1. IGL / สั่งการ (<span class="role-p0-name">7MB-NUEA</span>)</span>
+                <span class="text-[10px] font-mono bg-amber-500/15 px-2 py-0.5 rounded">AR + DMR</span>
+              </div>
+              <p class="text-[11px] text-slate-300"><strong>ของที่ต้องพก:</strong> Smoke 5 ลูก • Frag 2 ลูก • Molotov 1 ลูก • First Aid 4 • น้ำอัดลม/ยาฉีด 6</p>
+              <p class="text-[10px] text-slate-400">หน้าที่: เช็คขอบวง มาร์คจุดจอดรถ และปูสโมคเปิดทางให้ทีม</p>
+            </div>
+
+            <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 space-y-1.5">
+              <div class="text-xs font-bold text-red-400 flex items-center justify-between">
+                <span>🔥 2. Fragger / ตัวชน (<span class="role-p1-name">7MB-PLAYER 2</span>)</span>
+                <span class="text-[10px] font-mono bg-red-500/15 px-2 py-0.5 rounded">AR + SMG/SG</span>
+              </div>
+              <p class="text-[11px] text-slate-300"><strong>ของที่ต้องพก:</strong> Frag 4 ลูก • Molotov 3 ลูก • Smoke 3 ลูก • First Aid 3 • บูสต์เต็มหลอดตลอด</p>
+              <p class="text-[10px] text-slate-400">หน้าที่: ปาระเบิดเคลียร์บ้าน/หิน เปิดจังหวะน็อคแรกเพื่อเข้าชาร์จ</p>
+            </div>
+
+            <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 space-y-1.5">
+              <div class="text-xs font-bold text-emerald-400 flex items-center justify-between">
+                <span>🛡️ 3. Support / ซัพพอร์ต (<span class="role-p2-name">7MB-PLAYER 3</span>)</span>
+                <span class="text-[10px] font-mono bg-emerald-500/15 px-2 py-0.5 rounded">M416 + M249/DP</span>
+              </div>
+              <p class="text-[11px] text-slate-300"><strong>ของที่ต้องพก:</strong> Smoke 6-7 ลูก • Med Kit 1 • First Aid 5 • น้ำ/ยาฉีด 8 • กระสุนสำรองเผื่อเพื่อน</p>
+              <p class="text-[10px] text-slate-400">หน้าที่: ชุบเพื่อนเร็ว ยิงกดดันเผารถศัตรู และแบกสโมคหลักของตี้</p>
+            </div>
+
+            <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-3.5 space-y-1.5">
+              <div class="text-xs font-bold text-cyan-400 flex items-center justify-between">
+                <span>🎯 4. Sniper / แนวหลัง (<span class="role-p3-name">7MB-PLAYER 4</span>)</span>
+                <span class="text-[10px] font-mono bg-cyan-500/15 px-2 py-0.5 rounded">AR + Bolt/DMR (8x)</span>
+              </div>
+              <p class="text-[11px] text-slate-300"><strong>ของที่ต้องพก:</strong> Smoke 4 ลูก • Frag 3 ลูก • First Aid 3 • ยาบูสต์ 6 • สโคป 6x/8x</p>
+              <p class="text-[10px] text-slate-400">หน้าที่: ตัดน็อคระยะไกล ยิงคัฟเวอร์จังหวะเพื่อนวิ่งข้ามที่โล่ง</p>
+            </div>
+          </div>
+
+          <div class="bg-slate-900/90 border border-emerald-500/30 rounded-xl p-3 flex items-center justify-between text-xs">
+            <span class="text-slate-300">💨 <strong>รวมระเบิดควัน (Smoke) มาตรฐานทั้งตี้ก่อนเข้าวง 5:</strong></span>
+            <span class="font-mono text-base font-extrabold text-emerald-400">อย่างน้อย 18 – 20 ลูก / ทีม</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 4-Player Sensitivity & Control Code Vault -->
+      <div class="tac-card tac-border-gold rounded-2xl p-5 space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-sliders text-pubgGold"></i>
+              <span>คลังเก็บโค้ดความไว (Sensitivity) & โค้ดปุ่มกด (Layout) ของทั้ง 4 คน</span>
+            </h3>
+            <p class="text-xs text-slate-400">บันทึกโค้ดตั้งค่าของแต่ละคนไว้กันหาย เปลี่ยนเครื่องเมื่อไหร่กด Copy ไปวางในเกมได้ทันที</p>
+          </div>
+          <button onclick="manualSaveSquadData()" class="px-3.5 py-1.5 rounded-xl bg-pubgGold hover:bg-amber-400 text-obsidian font-bold text-xs transition self-start sm:self-auto">
+            <i class="fa-solid fa-floppy-disk mr-1"></i>บันทึกโค้ดตั้งค่าทั้งหมด
+          </button>
+        </div>
+
+        <div id="sensitivityVaultGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+          <!-- 4 Player Vault Cards Injected via JS -->
+        </div>
+      </div>
+
+    </section>
+
+    <!-- =================================================================== -->
+    <!-- TAB 5: สอบเลื่อนขั้น 2026 • ตาราง 6 โหมด & ศูนย์สำรอง/แชร์ข้อมูลทีม       -->
+    <!-- =================================================================== -->
+    <section id="tab-promo" class="tab-panel hidden space-y-6">
+
+      <!-- 2026 Promotion Matches Tracker for Selected Player -->
+      <div class="tac-card tac-border-gold rounded-2xl p-5 space-y-4">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="px-2 py-0.5 rounded bg-pubgGold text-obsidian font-mono text-[10px] font-extrabold">2026 V4.2+</span>
+              <h2 class="text-base sm:text-lg font-bold text-white">
+                เช็คผลสอบเลื่อนขั้น (Promotion Matches) ของ: <span id="promoPlayerName" class="text-pubgGold">7MB-NUEA</span>
+              </h2>
+            </div>
+            <p class="text-xs text-slate-400 mt-0.5">
+              เงื่อนไขปี 2026: สอบใน Erangel หรือ Livik นับอันดับการรอดชีวิตส่วนตัว และมีสิทธิ์ป้องกันการพลาดฟรี 1 ครั้งต่อรอบ
+            </p>
+          </div>
+          <button onclick="resetActivePlayerPromos()" class="px-3 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs border border-slate-700 transition self-start md:self-auto">
+            <i class="fa-solid fa-rotate-right mr-1 text-pubgGold"></i>รีเซ็ตผลสอบของคนนี้
+          </button>
+        </div>
+
+        <div id="promotionCardsContainer" class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <!-- Injected via JS -->
+        </div>
+      </div>
+
+      <!-- 6-Mode Table for Active Player + Sync/Export Center -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- 6-Mode Table (7 cols) -->
+        <div class="lg:col-span-7 tac-card rounded-2xl p-5 space-y-4">
+          <div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-3">
+            <div>
+              <h3 class="text-base font-bold text-white">
+                ตารางแต้มครบทั้ง 6 โหมดของ: <span id="sixModesPlayerName" class="text-pubgGold">7MB-NUEA</span>
+              </h3>
+              <p class="text-xs text-slate-400">พิมพ์แก้ไขแต้มของทั้ง 6 โหมดแยกตามรายคนได้เลย</p>
+            </div>
+            <button onclick="exportSquadCSV()" class="px-3 py-1.5 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-semibold transition">
+              <i class="fa-solid fa-file-csv mr-1"></i>Export ตารางทั้งทีม (.CSV เปิดใน Excel)
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse text-xs sm:text-sm">
+              <thead>
+                <tr class="border-b border-slate-800 text-[11px] text-slate-400 uppercase">
+                  <th class="py-2 px-2.5">โหมดการเล่น</th>
+                  <th class="py-2 px-2.5 text-center">แต้มปัจจุบัน</th>
+                  <th class="py-2 px-2.5">แรงค์ปัจจุบัน</th>
+                  <th class="py-2 px-2.5 text-right">ขาดอีก</th>
+                  <th class="py-2 px-2.5">หลังรีซีซั่น</th>
+                </tr>
+              </thead>
+              <tbody id="sixModesTableBody" class="divide-y divide-slate-800/60"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Team Sync, Share Link & Settings (5 cols) -->
+        <div class="lg:col-span-5 tac-card tac-border-cyan rounded-2xl p-5 space-y-4">
+          <div class="border-b border-slate-800 pb-3">
+            <h3 class="text-base font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-cloud-arrow-up text-cyan-400"></i>
+              <span>แชร์ข้อมูลทั้งทีม & ตั้งค่าซีซั่นระยะยาว</span>
+            </h3>
+            <p class="text-xs text-slate-400">เพราะ GitHub Pages เป็นเว็บแบบ Static ข้อมูลที่แก้จะเซฟในเครื่องคุณ และส่งต่อให้เพื่อนทั้งตี้ผ่านลิงก์หรือโค้ดซิงค์ได้ทันที!</p>
+          </div>
+
+          <!-- Share URL & Sync Code Box -->
+          <div class="bg-slate-900/90 border border-cyan-500/30 rounded-xl p-3.5 space-y-2.5">
+            <div class="text-xs font-bold text-cyan-300">วิธีแชร์ให้เพื่อนในตี้เห็นแต้มของทุกคนตรงกัน:</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button onclick="copyShareableSquadLink()" class="py-2 px-3 rounded-xl bg-cyan-500 hover:bg-cyan-400 text-obsidian font-extrabold text-xs transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-link"></i>
+                <span>1. คัดลอกลิงก์เว็บแชร์ทีม</span>
+              </button>
+              <button onclick="copySquadSyncCode()" class="py-2 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-cyan-500/40 text-cyan-300 font-semibold text-xs transition flex items-center justify-center gap-1.5">
+                <i class="fa-solid fa-code"></i>
+                <span>2. คัดลอกโค้ดซิงค์ข้อความ</span>
+              </button>
+            </div>
+
+            <div class="pt-1">
+              <label class="block text-[11px] text-slate-400 mb-1">หรือวางโค้ดซิงค์ที่เพื่อนส่งมาเพื่อโหลดข้อมูลทั้งทีม:</label>
+              <div class="flex gap-1.5">
+                <input id="importSyncCodeInput" type="text" placeholder="วางโค้ดซิงค์ทีมที่นี่..." class="w-full bg-obsidian border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white font-mono outline-none" />
+                <button onclick="applySquadSyncCode()" class="px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-obsidian font-bold text-xs shrink-0 transition">
+                  โหลดข้อมูล
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Season Settings -->
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">ชื่อซีซั่นปัจจุบัน</label>
+              <input id="settingSeasonName" type="text" oninput="saveCustomSettings()" class="w-full bg-obsidian border border-slate-700 rounded-xl px-3 py-1.5 text-xs font-bold text-white outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">เวลารีเซ็ตป้ายแดง</label>
+              <input id="settingDailyResetTime" type="time" oninput="saveCustomSettings()" class="w-full bg-obsidian border border-slate-700 rounded-xl px-3 py-1.5 font-mono text-xs font-bold text-red-400 outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">วันจบซีซั่น</label>
+              <input id="settingSeasonEndDate" type="datetime-local" oninput="saveCustomSettings()" class="w-full bg-obsidian border border-slate-700 rounded-xl px-2.5 py-1.5 font-mono text-xs font-bold text-pubgGold outline-none" />
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">ชดเชยแต้มรีแรงค์</label>
+              <input id="settingResetOffset" type="number" step="50" value="0" oninput="saveCustomSettings()" class="w-full bg-obsidian border border-slate-700 rounded-xl px-3 py-1.5 font-mono text-xs font-bold text-sky-400 outline-none" />
+            </div>
+          </div>
+
+          <!-- Backup JSON & Reset -->
+          <div class="grid grid-cols-3 gap-2 pt-1">
+            <button onclick="exportFullBackupJSON()" class="py-2 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-300 text-xs font-semibold border border-slate-700 transition">
+              <i class="fa-solid fa-download mr-1"></i>สำรอง .JSON
+            </button>
+            <label class="py-2 px-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-sky-300 text-xs font-semibold border border-slate-700 transition text-center cursor-pointer">
+              <i class="fa-solid fa-upload mr-1"></i>นำเข้า .JSON
+              <input type="file" accept=".json" onchange="importFullBackupJSON(event)" class="hidden" />
+            </label>
+            <button onclick="confirmResetAllData()" class="py-2 px-2 rounded-xl bg-red-950/60 hover:bg-red-900/70 text-red-300 text-xs font-semibold border border-red-500/30 transition">
+              <i class="fa-solid fa-rotate-left mr-1"></i>คืนค่าเริ่มต้น
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/80 bg-obsidian/90 py-4 mt-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-400">
+      <div>
+        <strong class="text-pubgGold">PUBG MOBILE 4-Player Squad Hub (2026 Edition)</strong> — รองรับบันทึกข้อมูลรายคน & แชร์ลิงก์ทั้งทีมบน GitHub Pages
+      </div>
+      <div class="font-mono text-[11px]">
+        Auto-Save LocalStorage • Shareable URL Hash (`#squad=...`) • V4.2+ Promotion Rules
+      </div>
+    </div>
+  </footer>
+
+  <!-- ===================================================================== -->
+  <!-- APPLICATION JAVASCRIPT ENGINE                                         -->
+  <!-- ===================================================================== -->
+  <script>
+    const STORAGE_KEY = 'PUBGM_SQUAD_HUB_2026_V2';
+
+    const GAME_MODES = [
+      { id: 'tpp_squad', name: 'TPP Squad', desc: 'มุมมองที่ 3 - ทีม 4 คน' },
+      { id: 'tpp_duo',   name: 'TPP Duo',   desc: 'มุมมองที่ 3 - คู่ 2 คน' },
+      { id: 'tpp_solo',  name: 'TPP Solo',  desc: 'มุมมองที่ 3 - ลุยเดี่ยว' },
+      { id: 'fpp_squad', name: 'FPP Squad', desc: 'มุมมองที่ 1 - ทีม 4 คน' },
+      { id: 'fpp_duo',   name: 'FPP Duo',   desc: 'มุมมองที่ 1 - คู่ 2 คน' },
+      { id: 'fpp_solo',  name: 'FPP Solo',  desc: 'มุมมองที่ 1 - ลุยเดี่ยว' }
+    ];
+
+    const BASE_RANK_TIERS = [
+      { name: 'Bronze V',    min: 1000, max: 1099, group: 'Bronze' },
+      { name: 'Bronze IV',   min: 1100, max: 1199, group: 'Bronze' },
+      { name: 'Bronze III',  min: 1200, max: 1299, group: 'Bronze' },
+      { name: 'Bronze II',   min: 1300, max: 1399, group: 'Bronze' },
+      { name: 'Bronze I',    min: 1400, max: 1499, group: 'Bronze' },
+      { name: 'Silver V',    min: 1500, max: 1599, group: 'Silver' },
+      { name: 'Silver IV',   min: 1600, max: 1699, group: 'Silver' },
+      { name: 'Silver III',  min: 1700, max: 1799, group: 'Silver' },
+      { name: 'Silver II',   min: 1800, max: 1899, group: 'Silver' },
+      { name: 'Silver I',    min: 1900, max: 1999, group: 'Silver' },
+      { name: 'Gold V',      min: 2000, max: 2099, group: 'Gold' },
+      { name: 'Gold IV',     min: 2100, max: 2199, group: 'Gold' },
+      { name: 'Gold III',    min: 2200, max: 2299, group: 'Gold' },
+      { name: 'Gold II',     min: 2300, max: 2399, group: 'Gold' },
+      { name: 'Gold I',      min: 2400, max: 2499, group: 'Gold' },
+      { name: 'Platinum V',  min: 2500, max: 2599, group: 'Platinum' },
+      { name: 'Platinum IV', min: 2600, max: 2699, group: 'Platinum' },
+      { name: 'Platinum III',min: 2700, max: 2799, group: 'Platinum' },
+      { name: 'Platinum II', min: 2800, max: 2899, group: 'Platinum' },
+      { name: 'Platinum I',  min: 2900, max: 2999, group: 'Platinum' },
+      { name: 'Diamond V',   min: 3000, max: 3099, group: 'Diamond' },
+      { name: 'Diamond IV',  min: 3100, max: 3199, group: 'Diamond' },
+      { name: 'Diamond III', min: 3200, max: 3299, group: 'Diamond' },
+      { name: 'Diamond II',  min: 3300, max: 3399, group: 'Diamond' },
+      { name: 'Diamond I',   min: 3400, max: 3499, group: 'Diamond' },
+      { name: 'Crown V',     min: 3500, max: 3599, group: 'Crown' },
+      { name: 'Crown IV',    min: 3600, max: 3699, group: 'Crown' },
+      { name: 'Crown III',   min: 3700, max: 3799, group: 'Crown' },
+      { name: 'Crown II',    min: 3800, max: 3899, group: 'Crown' },
+      { name: 'Crown I',     min: 3900, max: 4199, group: 'Crown' }
+    ];
+
+    // Tactical Map Drop Spots Database
+    const MAP_DROP_SPOTS = {
+      Erangel: [
+        { name: 'Pochinki', risk: 'HOT', tip: 'ใจกลางแมพ เดือดตั้งแต่โดด เหมาะกับตี้ที่ต้องการเก็บคิลต้นเกม' },
+        { name: 'Sosnovka Military Base', risk: 'HOT', tip: 'ของฟาร์มระดับ 3 แน่น ระวังโดนดักสะพานตอนเข้าวง' },
+        { name: 'Yasnaya Polyana', risk: 'BALANCED', tip: 'เมืองใหญ่ฟาร์มพอ 4 คนสบาย มีโรงรถและจุดหารถริมถนนเพียบ' },
+        { name: ' Mylta Power & โรงไฟฟ้าเล็ก', risk: 'SAFE', tip: 'ของดี คนไม่แน่นมาก มีรถเกิดตามถนนเลียบชายฝั่ง' },
+        { name: 'Zharki / Kameshki', risk: 'SAFE', tip: 'สายเซฟแต้มดัน Conqueror หารถเข้าวงชัวร์ 100% ไม่เสียแต้มต้นเกม' },
+        { name: 'Georgopol Containers & เมืองเหนือ', risk: 'BALANCED', tip: 'ฟาร์มไวในเมืองเหนือแล้วดักตี้ที่ขึ้นมาจากตู้คอนเทนเนอร์' }
+      ],
+      Miramar: [
+        { name: 'Pecado', risk: 'HOT', tip: 'แลนด์มาร์คกลางแมพ วัดคมตึกแดงและโรงยิม' },
+        { name: 'Hacienda del Patron', risk: 'HOT', tip: 'คฤหาสน์ของทองล้วน จบไวถ้าชนะไฟต์แรก' },
+        { name: 'Los Leones', risk: 'BALANCED', tip: 'เมืองใหญ่สุด ฟาร์มแยกโซนได้ปลอดภัย หารถกระบะ/รถทองง่าย' },
+        { name: 'Chumacera', risk: 'BALANCED', tip: 'ของแน่น มีเนินสูงให้สไนเปอร์คุมโซนหลังฟาร์มเสร็จ' },
+        { name: 'Impala / หมู่บ้านริมทะเล', risk: 'SAFE', tip: 'ปลอดภัยสูง เหมาะกับสายฟาร์มยาและสโมคไว้บีบวงท้าย' }
+      ],
+      Rondo: [
+        { name: 'Jadena City', risk: 'HOT', tip: 'เมืองตึกระฟ้า มีบันไดเลื่อนเคลื่อนที่ไว ไฟต์ระยะประชิดดุเดือด' },
+        { name: 'Stadium', risk: 'HOT', tip: 'สนามกีฬากลางแมพ ของฟาร์มแน่นแต่ตี้ลงเยอะ' },
+        { name: 'Mey Ran', risk: 'BALANCED', tip: 'หมู่บ้านเรือนไทยริมน้ำ ของเยอะและหลบมุมสายตาได้ดี' },
+        { name: 'Rin Jiang', risk: 'BALANCED', tip: 'โซนท่าเรือทางใต้ มีร้านค้าให้ซื้อของและรถเกิดรอบเมือง' },
+        { name: 'Bamboo / ขอบแมพฝั่งตะวันตก', risk: 'SAFE', tip: 'เน้นฟาร์มเงียบเก็บเหรียญซื้อสโมคและเกราะใน Shop' }
+      ],
+      Livik: [
+        { name: 'Midstein', risk: 'HOT', tip: 'กลางแมพ ตึกสูงเยอะ ไฟต์ต่อเนื่องตั้งแต่ต้นจนจบ' },
+        { name: 'Power Plant', risk: 'HOT', tip: 'ของดีมาก เหมาะกับตี้ที่ยิงระยะประชิดแม่น' },
+        { name: 'Blomster', risk: 'BALANCED', tip: 'เมืองขนาดกลาง ฟาร์มครบ 4 คนไวแล้ววิ่งเข้าวงได้เลย' },
+        { name: 'Hot Springs', risk: 'SAFE', tip: 'แช่น้ำพุร้อนเพิ่มบูสต์ฟรี ฟาร์มของรอบๆ เซฟแต้มติด Top 5 ชัวร์' }
+      ],
+      Sanhok: [
+        { name: 'Bootcamp', risk: 'HOT', tip: 'ศูนย์กลางความเดือด วัดดวงและฝีมือระยะประชิด' },
+        { name: 'Paradise Resort', risk: 'HOT', tip: 'มุมตึกเยอะ เหมาะกับสาย SMG และปาระเบิด' },
+        { name: 'Pai Nan / Kampong', risk: 'BALANCED', tip: 'ฟาร์มง่าย ข้ามสะพานดักวงได้ดี' },
+        { name: 'Ha Tinh / Khao', risk: 'SAFE', tip: 'ปลอดภัย ฟาร์มครบแล้วค่อยเดินเลียบขอบวง' }
+      ],
+      Vikendi: [
+        { name: 'Villa / Castle', risk: 'HOT', tip: 'จุดปะทะหลักกลางหิมะ ของระดับสูงเพียบ' },
+        { name: 'Cosmodrome', risk: 'BALANCED', tip: 'พื้นที่กว้าง มีห้องใต้ดินและจุดซุ่มสไนเปอร์เยอะ' },
+        { name: 'Peshkova / Trevno', risk: 'SAFE', tip: 'เมืองขอบแมพ หารถหิมะเข้าวงง่าย เซฟแต้มดีเยี่ยม' }
+      ]
+    };
+
+    function createDefaultPlayer(slotIndex, ign, role, defaultPts, kd, winRate, cards, weaponNote) {
+      return {
+        id: slotIndex,
+        ign,
+        uid: `518900000${slotIndex + 1}`,
+        role,
+        activeMode: 'tpp_squad',
+        avgPtsPerMatch: 15,
+        kd,
+        winRate,
+        protectionCards: cards,
+        prevPtsSnapshot: null,
+        modes: {
+          tpp_squad: defaultPts,
+          tpp_duo:   Math.max(2000, defaultPts - 1100),
+          tpp_solo:  Math.max(2000, defaultPts - 1600),
+          fpp_squad: 2800,
+          fpp_duo:   2200,
+          fpp_solo:  2000
+        },
+        promotions: {
+          ace:       { reqPts: 4200, reqStreak: 3, map: 'Erangel', erangelTop: 15, livikTop: 8, passCount: defaultPts >= 4700 ? 3 : 2, protUsed: false, promoted: defaultPts >= 4700 },
+          master:    { reqPts: 4700, reqStreak: 4, map: 'Erangel', erangelTop: 12, livikTop: 6, passCount: defaultPts >= 5200 ? 4 : 2, protUsed: false, promoted: defaultPts >= 5200 },
+          dominator: { reqPts: 5200, reqStreak: 5, map: 'Erangel', erangelTop: 10, livikTop: 5, passCount: defaultPts >= 5400 ? 5 : 3, protUsed: true,  promoted: defaultPts >= 5400 }
+        },
+        vault: {
+          sensCode: `7389-4120-8891-002${slotIndex + 1}-99${slotIndex}`,
+          layoutCode: `7389-4120-5510-114${slotIndex + 1}-00${slotIndex}`,
+          gyro: 'Full Gyroscope (เปิดตลอด 300-400%)',
+          weapons: weaponNote
+        }
+      };
+    }
+
+    function getDefaultState() {
+      const futureDate = new Date(Date.now() + 45 * 86400000);
+      const isoLocal = new Date(futureDate.getTime() - futureDate.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+
+      return {
+        selectedPlayerIdx: 0,
+        conqThreshold: 5850,
+        lastSavedTime: 'เพิ่งบันทึกเมื่อสักครู่',
+        players: [
+          createDefaultPlayer(0, '7MB-NUEA',     'IGL / สั่งการ',      5720, 4.8, 28, 3, 'M416 + Mini14 / สโมค 5 ลูก'),
+          createDefaultPlayer(1, '7MB-PLAYER 2', 'Fragger / ตัวชน',    5460, 5.2, 26, 2, 'AUG + DBS/UMP45 / ระเบิด 4 ลูก'),
+          createDefaultPlayer(2, '7MB-PLAYER 3', 'Support / ซัพพอร์ต', 5310, 3.9, 25, 3, 'M416 + M249 / แบกสโมค 7 ลูก'),
+          createDefaultPlayer(3, '7MB-PLAYER 4', 'Sniper / แนวหลัง',   5180, 4.4, 24, 2, 'SCAR-L + AWM/M24 (8x)')
+        ],
+        squadHistory: [
+          {
+            id: 101,
+            time: 'เมื่อวาน 21:30',
+            map: 'Erangel',
+            placement: 1,
+            totalKills: 19,
+            summary: '7MB-NUEA (+26), 7MB-PLAYER 2 (+28), 7MB-PLAYER 3 (+22), 7MB-PLAYER 4 (+24)',
+            note: '🍗 กินไก่วงสุดท้ายแถว Pochinki'
+          },
+          {
+            id: 102,
+            time: 'วันนี้ 20:15',
+            map: 'Miramar',
+            placement: 3,
+            totalKills: 12,
+            summary: '7MB-NUEA (+16), 7MB-PLAYER 2 (+18), 7MB-PLAYER 3 (+14), 7MB-PLAYER 4 (+15)',
+            note: 'ติด Top 3 ยึดเนิน Chumacera'
+          }
+        ],
+        settings: {
+          seasonName: 'C11S33 • 2026',
+          dailyResetTime: '07:20',
+          seasonEndDate: isoLocal,
+          resetOffset: 0
+        }
+      };
+    }
+
+    let appState = getDefaultState();
+    let lastSimulatedPts = 18;
+
+    // Encode / Decode State for URL Sharing
+    function encodeStateToBase64(stateObj) {
+      try {
+        const jsonStr = JSON.stringify(stateObj);
+        return btoa(encodeURIComponent(jsonStr));
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function decodeStateFromBase64(b64Str) {
+      try {
+        const jsonStr = decodeURIComponent(atob(b64Str.trim()));
+        return JSON.parse(jsonStr);
+      } catch (e) {
+        return null;
+      }
+    }
+
+    function loadInitialState() {
+      // 1. Check if URL has #squad=...
+      if (window.location.hash && window.location.hash.startsWith('#squad=')) {
+        const rawCode = window.location.hash.replace('#squad=', '');
+        const decoded = decodeStateFromBase64(rawCode);
+        if (decoded && Array.isArray(decoded.players) && decoded.players.length === 4) {
+          appState = { ...getDefaultState(), ...decoded };
+          document.getElementById('sharedUrlBanner').classList.remove('hidden');
+          return;
+        }
+      }
+
+      // 2. Otherwise load from localStorage
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (parsed && Array.isArray(parsed.players) && parsed.players.length === 4) {
+            appState = { ...getDefaultState(), ...parsed };
+          }
+        }
+      } catch (e) {
+        console.error('Error loading local state:', e);
+      }
+    }
+
+    function saveState(showToastMsg = false) {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      appState.lastSavedTime = `บันทึกเมื่อ ${timeStr}`;
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      } catch (e) {
+        console.error('Save error:', e);
+      }
+      const statusEl = document.getElementById('lastSavedStatus');
+      if (statusEl) {
+        statusEl.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400"></span><span>${appState.lastSavedTime}</span>`;
+      }
+      if (showToastMsg) {
+        showToast('💾 บันทึกข้อมูลทั้ง 4 คนลงเครื่องเรียบร้อยแล้ว!', 'success');
+      }
+    }
+
+    function manualSaveSquadData() {
+      saveState(true);
+    }
+
+    function saveSharedDataToLocal() {
+      saveState(true);
+      document.getElementById('sharedUrlBanner').classList.add('hidden');
+      history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+
+    function dismissSharedBanner() {
+      document.getElementById('sharedUrlBanner').classList.add('hidden');
+    }
+
+    // Clipboard Helper (Works inside iframes & GitHub Pages)
+    function copyTextToClipboard(text, successMsg) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        showToast(successMsg || 'คัดลอกลงคลิปบอร์ดแล้ว!', 'success');
+      } catch (err) {
+        showToast('ไม่สามารถคัดลอกอัตโนมัติได้ กรุณาคัดลอกจากช่องข้อความ', 'warn');
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function copyShareableSquadLink() {
+      saveState(false);
+      const b64 = encodeStateToBase64(appState);
+      const baseUrl = window.location.href.split('#')[0];
+      const fullShareUrl = `${baseUrl}#squad=${b64}`;
+      copyTextToClipboard(
+        fullShareUrl,
+        '🔗 คัดลอกลิงก์แชร์ข้อมูลทั้งทีมแล้ว! ส่งลิงก์นี้ให้เพื่อนเปิดดูแต้มทั้ง 4 คนได้เลย'
+      );
+    }
+
+    function copySquadSyncCode() {
+      saveState(false);
+      const b64 = encodeStateToBase64(appState);
+      copyTextToClipboard(b64, '📋 คัดลอกโค้ดซิงค์ข้อมูลทีมแล้ว! ส่งให้เพื่อนนำไปวางในช่องโหลดข้อมูลได้เลย');
+    }
+
+    function applySquadSyncCode() {
+      const code = (document.getElementById('importSyncCodeInput').value || '').trim();
+      if (!code) {
+        showToast('กรุณาวางโค้ดซิงค์ในช่องก่อนกดโหลดข้อมูล', 'warn');
+        return;
+      }
+      const raw = code.includes('#squad=') ? code.split('#squad=')[1] : code;
+      const decoded = decodeStateFromBase64(raw);
+      if (!decoded || !Array.isArray(decoded.players) || decoded.players.length !== 4) {
+        showToast('โค้ดซิงค์ไม่ถูกต้อง กรุณาตรวจสอบอีกครั้ง', 'warn');
+        return;
+      }
+      appState = { ...getDefaultState(), ...decoded };
+      document.getElementById('importSyncCodeInput').value = '';
+      saveState(false);
+      renderAll();
+      showToast('🎉 โหลดข้อมูลทีมทั้ง 4 คนจากโค้ดซิงค์สำเร็จแล้ว!', 'success');
+    }
+
+    // =====================================================================
+    // CORE RANK & SEASON RESET ENGINE
+    // =====================================================================
+    function evaluateRank(points, conqThreshold = 5850) {
+      const pts = Math.max(1000, Math.floor(Number(points) || 1000));
+      const effectiveConqCutoff = Math.max(5200, Math.floor(Number(conqThreshold) || 5850));
+
+      let rankName = 'Bronze V';
+      let tierGroup = 'Bronze';
+      let stars = 0;
+      let starLabel = 'ไม่มีดาว';
+      let currentMin = 1000;
+      let nextTargetPts = 1100;
+      let nextRankName = 'Bronze IV';
+
+      if (pts < 4200) {
+        for (let i = 0; i < BASE_RANK_TIERS.length; i++) {
+          const t = BASE_RANK_TIERS[i];
+          if (pts >= t.min && pts <= t.max) {
+            rankName = t.name;
+            tierGroup = t.group;
+            currentMin = t.min;
+            nextTargetPts = t.max + 1;
+            nextRankName = i + 1 < BASE_RANK_TIERS.length ? BASE_RANK_TIERS[i + 1].name : 'Ace (0★)';
+            break;
+          }
+        }
+      } else {
+        stars = Math.floor((pts - 4200) / 100);
+        currentMin = 4200 + stars * 100;
+        nextTargetPts = currentMin + 100;
+
+        if (stars < 5) {
+          tierGroup = 'Ace';
+          rankName = `Ace (${stars}★)`;
+          starLabel = `★ ${stars} ดาว (Ace)`;
+        } else if (stars < 10) {
+          tierGroup = 'Ace Master';
+          rankName = `Ace Master (${stars}★)`;
+          starLabel = `★ ${stars} ดาว (Master)`;
+        } else {
+          tierGroup = 'Ace Dominator';
+          rankName = `Ace Dominator (${stars}★)`;
+          starLabel = `★ ${stars} ดาว (Dominator)`;
+        }
+
+        const nextStar = stars + 1;
+        if (nextStar < 5) nextRankName = `Ace (${nextStar}★)`;
+        else if (nextStar < 10) nextRankName = `Ace Master (${nextStar}★)`;
+        else nextRankName = `Ace Dominator (${nextStar}★)`;
+      }
+
+      const span = Math.max(1, nextTargetPts - currentMin);
+      const progressPct = Math.min(100, Math.max(0, Math.round(((pts - currentMin) / span) * 100)));
+      const ptsNeededNext = Math.max(0, nextTargetPts - pts);
+      const isConquerorEligible = pts >= effectiveConqCutoff && pts >= 5200;
+      const ptsToConqueror = Math.max(0, effectiveConqCutoff - pts);
+
+      return {
+        points: pts,
+        rankName,
+        tierGroup,
+        stars,
+        starLabel,
+        currentMin,
+        nextTargetPts,
+        nextRankName,
+        progressPct,
+        ptsNeededNext,
+        effectiveConqCutoff,
+        isConquerorEligible,
+        ptsToConqueror
+      };
+    }
+
+    function evaluateSeasonReset(points) {
+      const pts = Math.max(1000, Math.floor(Number(points) || 1000));
+      const offset = Number(appState.settings.resetOffset) || 0;
+
+      let baseResetPts = 2000;
+      let nextResetBracketPts = null;
+      let nextResetRankName = null;
+
+      if (pts < 2000) {
+        baseResetPts = pts;
+        nextResetBracketPts = 2000;
+        nextResetRankName = 'Gold V (2,000)';
+      } else if (pts <= 2499) {
+        baseResetPts = 2000;
+        nextResetBracketPts = 2500;
+        nextResetRankName = 'Gold IV (2,100)';
+      } else if (pts <= 2699) {
+        baseResetPts = 2100;
+        nextResetBracketPts = 2700;
+        nextResetRankName = 'Gold III (2,200)';
+      } else if (pts <= 2799) {
+        baseResetPts = 2200;
+        nextResetBracketPts = 2800;
+        nextResetRankName = 'Gold II (2,300)';
+      } else if (pts <= 2999) {
+        baseResetPts = 2300;
+        nextResetBracketPts = 3000;
+        nextResetRankName = 'Gold I (2,400)';
+      } else if (pts <= 3199) {
+        baseResetPts = 2400;
+        nextResetBracketPts = 3200;
+        nextResetRankName = 'Platinum V (2,500)';
+      } else if (pts <= 3399) {
+        baseResetPts = 2500;
+        nextResetBracketPts = 3400;
+        nextResetRankName = 'Platinum IV (2,600)';
+      } else if (pts <= 3599) {
+        baseResetPts = 2600;
+        nextResetBracketPts = 3600;
+        nextResetRankName = 'Platinum III (2,700)';
+      } else if (pts <= 3799) {
+        baseResetPts = 2700;
+        nextResetBracketPts = 3800;
+        nextResetRankName = 'Platinum II (2,800)';
+      } else if (pts <= 4199) {
+        baseResetPts = 2800;
+        nextResetBracketPts = 4200;
+        nextResetRankName = 'Platinum I (2,900)';
+      } else if (pts <= 4799) {
+        baseResetPts = 2900;
+        nextResetBracketPts = 4800;
+        nextResetRankName = 'Diamond V (3,000)';
+      } else if (pts <= 5299) {
+        baseResetPts = 3000;
+        nextResetBracketPts = 5300;
+        nextResetRankName = 'Diamond IV (3,100)';
+      } else {
+        baseResetPts = 3100;
+        nextResetBracketPts = null;
+        nextResetRankName = null;
+      }
+
+      const finalResetPts = Math.max(1000, baseResetPts + offset);
+      const resetRankEval = evaluateRank(finalResetPts);
+      const droppedPts = Math.max(0, pts - finalResetPts);
+      const dropPct = pts > 0 ? ((droppedPts / pts) * 100).toFixed(1) : '0.0';
+
+      return {
+        resetPoints: finalResetPts,
+        resetRankName: resetRankEval.rankName,
+        resetTierGroup: resetRankEval.tierGroup,
+        droppedPts,
+        dropPct,
+        nextResetBracketPts,
+        nextResetRankName
+      };
+    }
+
+    function getRankEmblemSVG(tierGroup, stars = 0, isConq = false) {
+      if (isConq) {
+        return `
+          <svg viewBox="0 0 120 120" class="w-full h-full">
+            <polygon points="60,6 108,30 96,94 60,114 24,94 12,30" fill="#EF4444" stroke="#FEF08A" stroke-width="3"/>
+            <polygon points="60,16 96,36 86,86 60,102 34,86 24,36" fill="#450A0A" stroke="#F59E0B" stroke-width="1.5"/>
+            <path d="M35 65 L45 40 L60 55 L75 40 L85 65 Z" fill="#FDE047" stroke="#FFF" stroke-width="1.5"/>
+            <text x="60" y="86" text-anchor="middle" fill="#FEF08A" font-size="11" font-family="JetBrains Mono" font-weight="800">CONQ</text>
+          </svg>
+        `;
+      }
+      const palettes = {
+        'Bronze':        { c1: '#D97706', inner: '#451A03', stroke: '#FBBF24', label: 'BRONZE' },
+        'Silver':        { c1: '#94A3B8', inner: '#1E293B', stroke: '#F8FAFC', label: 'SILVER' },
+        'Gold':          { c1: '#FACC15', inner: '#422006', stroke: '#FEF08A', label: 'GOLD' },
+        'Platinum':      { c1: '#38BDF8', inner: '#082F49', stroke: '#BAE6FD', label: 'PLAT' },
+        'Diamond':       { c1: '#818CF8', inner: '#1E1B4B', stroke: '#E0E7FF', label: 'DIAMOND' },
+        'Crown':         { c1: '#F59E0B', inner: '#3B0764', stroke: '#FDE047', label: 'CROWN' },
+        'Ace':           { c1: '#FBBF24', inner: '#451A03', stroke: '#FEF9C3', label: 'ACE' },
+        'Ace Master':    { c1: '#06B6D4', inner: '#0F172A', stroke: '#FDE047', label: 'MASTER' },
+        'Ace Dominator': { c1: '#EF4444', inner: '#450A0A', stroke: '#FEF08A', label: 'DOM' }
+      };
+      const p = palettes[tierGroup] || palettes['Gold'];
+      const badge = stars > 0 ? `${stars}★` : p.label;
+      return `
+        <svg viewBox="0 0 120 120" class="w-full h-full">
+          <polygon points="60,8 104,28 92,90 60,112 28,90 16,28" fill="${p.c1}" stroke="${p.stroke}" stroke-width="2.5"/>
+          <polygon points="60,18 92,34 83,82 60,100 37,82 28,34" fill="${p.inner}" stroke="${p.c1}" stroke-width="1.5"/>
+          <polygon points="60,28 67,44 85,46 71,58 75,75 60,66 45,75 49,58 35,46 53,44" fill="${p.stroke}"/>
+          <text x="60" y="91" text-anchor="middle" fill="${p.stroke}" font-size="11" font-family="JetBrains Mono" font-weight="800">${badge}</text>
+        </svg>
+      `;
+    }
+
+    // =====================================================================
+    // TOP SQUAD SELECTOR BAR & TAB 1 (4-PLAYER SQUAD HUB)
+    // =====================================================================
+    function selectSquadMember(idx, openCalcTab = false) {
+      appState.selectedPlayerIdx = idx;
+      saveState(false);
+      renderAll();
+      if (openCalcTab) {
+        switchTab('tab-calc');
+      }
+    }
+
+    function renderSquadSelectorBar() {
+      const container = document.getElementById('squadSelectorBar');
+      container.innerHTML = appState.players.map((p, idx) => {
+        const isSelected = appState.selectedPlayerIdx === idx;
+        const pts = p.modes.tpp_squad;
+        return `
+          <button
+            onclick="selectSquadMember(${idx}, false)"
+            class="shrink-0 px-3 py-1.5 rounded-xl text-xs font-semibold transition flex items-center gap-1.5 border ${
+              isSelected
+                ? 'bg-pubgGold text-obsidian border-pubgGold font-extrabold shadow-md shadow-amber-500/20'
+                : 'bg-slate-900/90 text-slate-300 border-slate-700/80 hover:border-amber-500/50 hover:text-white'
+            }"
+          >
+            <span class="font-mono text-[10px] px-1.5 py-0.2 rounded ${isSelected ? 'bg-obsidian text-pubgGold' : 'bg-slate-800 text-amber-400'}">#${idx + 1}</span>
+            <span>${p.ign}</span>
+            <span class="font-mono text-[11px] ${isSelected ? 'text-obsidian/80' : 'text-amber-300'}">(${pts.toLocaleString()})</span>
+          </button>
+        `;
+      }).join('');
+
+      // Also update role names in Tab 4
+      appState.players.forEach((p, idx) => {
+        document.querySelectorAll(`.role-p${idx}-name`).forEach(el => {
+          el.textContent = p.ign;
+        });
+      });
+    }
+
+    function renderSquadOverviewTab() {
+      const conqCutoff = appState.conqThreshold;
+      document.getElementById('squadConqCutoffInput').value = conqCutoff;
+
+      const ptsList = appState.players.map(p => p.modes.tpp_squad);
+      const avgPts = Math.round(ptsList.reduce((a, b) => a + b, 0) / 4);
+      const avgEval = evaluateRank(avgPts, conqCutoff);
+
+      document.getElementById('squadAvgPoints').textContent = avgPts.toLocaleString();
+      document.getElementById('squadAvgRankLabel').textContent = `แรงค์เฉลี่ย: ${avgEval.rankName}`;
+
+      // MVP
+      let mvp = appState.players[0];
+      appState.players.forEach(p => {
+        if (p.modes.tpp_squad > mvp.modes.tpp_squad) mvp = p;
+      });
+      const mvpEval = evaluateRank(mvp.modes.tpp_squad, conqCutoff);
+      document.getElementById('squadMvpName').textContent = `${mvp.ign} (${mvpEval.rankName})`;
+      document.getElementById('squadMvpPts').textContent = mvpEval.isConquerorEligible
+        ? `${mvp.modes.tpp_squad.toLocaleString()} แต้ม (ผ่านเกณฑ์ Conqueror!)`
+        : `${mvp.modes.tpp_squad.toLocaleString()} แต้ม (อีก ${mvpEval.ptsToConqueror.toLocaleString()} ถึง Top 500)`;
+
+      // Closest to next rank/star
+      let closestPlayer = appState.players[0];
+      let minNeeded = 99999;
+      appState.players.forEach(p => {
+        const ev = evaluateRank(p.modes.tpp_squad, conqCutoff);
+        if (ev.ptsNeededNext < minNeeded) {
+          minNeeded = ev.ptsNeededNext;
+          closestPlayer = p;
+        }
+      });
+      const closeEv = evaluateRank(closestPlayer.modes.tpp_squad, conqCutoff);
+      document.getElementById('squadClosestUpName').textContent = closestPlayer.ign;
+      document.getElementById('squadClosestUpDesc').textContent = `ขาดอีกแค่ ${closeEv.ptsNeededNext} แต้ม ขึ้น ${closeEv.nextRankName}`;
+
+      // Queue compatibility & Total Protection cards
+      const maxPts = Math.max(...ptsList);
+      const minPts = Math.min(...ptsList);
+      const gap = maxPts - minPts;
+      const totalCards = appState.players.reduce((s, p) => s + (Number(p.protectionCards) || 0), 0);
+      const queueEl = document.getElementById('squadQueueStatus');
+      if (minPts < 2500 && maxPts >= 4200) {
+        queueEl.className = 'text-sm font-extrabold text-amber-400 mt-1';
+        queueEl.textContent = `⚠️ แต้มห่างกัน ${gap.toLocaleString()} (ระวังจำกัดโหมดแรงค์)`;
+      } else {
+        queueEl.className = 'text-sm font-extrabold text-emerald-400 mt-1';
+        queueEl.textContent = `✅ กดทีม 4 คนได้ปกติ (ห่างสูงสุด ${gap.toLocaleString()} แต้ม)`;
+      }
+      document.getElementById('squadTotalCards').textContent = `การ์ดป้องกันแต้มรวมทั้งตี้: ${totalCards} ใบ`;
+
+      // Render 4 Player Cards
+      const grid = document.getElementById('squadCardsGrid');
+      grid.innerHTML = appState.players.map((p, idx) => {
+        const pts = p.modes.tpp_squad;
+        const rEval = evaluateRank(pts, conqCutoff);
+        const sEval = evaluateSeasonReset(pts);
+        const isSelected = appState.selectedPlayerIdx === idx;
+
+        return `
+          <div class="tac-card rounded-2xl p-4 flex flex-col justify-between space-y-3 ${isSelected ? 'tac-border-gold' : ''}">
+            <div class="space-y-2.5">
+              <!-- Card Header: Slot + Editable IGN -->
+              <div class="flex items-center justify-between gap-2">
+                <span class="px-2 py-0.5 rounded-lg font-mono text-[11px] font-extrabold ${
+                  isSelected ? 'bg-pubgGold text-obsidian' : 'bg-slate-800 text-amber-400'
+                }">คนที่ ${idx + 1}</span>
+                <select
+                  onchange="quickUpdatePlayerRole(${idx}, this.value)"
+                  class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-0.5 text-[11px] font-semibold text-cyan-300 outline-none"
+                >
+                  <option value="IGL / สั่งการ" ${p.role === 'IGL / สั่งการ' ? 'selected' : ''}>👑 IGL / สั่งการ</option>
+                  <option value="Fragger / ตัวชน" ${p.role === 'Fragger / ตัวชน' ? 'selected' : ''}>🔥 Fragger / ตัวชน</option>
+                  <option value="Support / ซัพพอร์ต" ${p.role === 'Support / ซัพพอร์ต' ? 'selected' : ''}>🛡️ Support / ซัพพอร์ต</option>
+                  <option value="Sniper / แนวหลัง" ${p.role === 'Sniper / แนวหลัง' ? 'selected' : ''}>🎯 Sniper / แนวหลัง</option>
+                  <option value="All-Rounder / รอบด้าน" ${p.role === 'All-Rounder / รอบด้าน' ? 'selected' : ''}>⚡ All-Rounder</option>
+                </select>
+              </div>
+
+              <!-- Direct Name Input -->
+              <div>
+                <label class="block text-[10px] text-slate-400 mb-0.5">ชื่อในเกม (พิมพ์แก้ได้เลย):</label>
+                <input
+                  type="text"
+                  value="${p.ign}"
+                  oninput="quickUpdatePlayerName(${idx}, this.value)"
+                  class="w-full bg-obsidian border border-slate-700 focus:border-pubgGold rounded-xl px-3 py-1.5 text-sm font-extrabold text-white outline-none"
+                />
+              </div>
+
+              <!-- Rank & Points Box -->
+              <div class="bg-slate-900/90 border border-slate-800 rounded-xl p-3 flex items-center gap-3">
+                <div class="w-14 h-14 shrink-0">
+                  ${getRankEmblemSVG(rEval.tierGroup, rEval.stars, rEval.isConquerorEligible)}
+                </div>
+                <div class="flex-1 min-w-0">
+                  <div class="text-sm font-extrabold ${rEval.isConquerorEligible ? 'text-conqRed' : 'text-pubgGold'} truncate">
+                    ${rEval.isConquerorEligible ? `Conqueror (${rEval.stars}★)` : rEval.rankName}
+                  </div>
+                  <div class="flex items-center gap-1.5 mt-1">
+                    <input
+                      type="number"
+                      min="1000"
+                      max="9999"
+                      value="${pts}"
+                      oninput="quickUpdatePlayerPts(${idx}, this.value)"
+                      class="w-24 bg-obsidian border border-amber-500/50 focus:border-pubgGold rounded-lg px-2 py-0.5 font-mono text-sm font-extrabold text-amber-300 text-center outline-none"
+                    />
+                    <span class="text-[11px] text-slate-400">แต้ม</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick +/- Buttons on Card -->
+              <div class="grid grid-cols-4 gap-1 font-mono text-[11px]">
+                <button onclick="quickAdjustPlayerPts(${idx}, -15)" class="py-1 rounded bg-red-950/60 hover:bg-red-900 text-red-300 border border-red-500/30 font-bold">-15</button>
+                <button onclick="quickAdjustPlayerPts(${idx}, +10)" class="py-1 rounded bg-emerald-950/60 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/30 font-bold">+10</button>
+                <button onclick="quickAdjustPlayerPts(${idx}, +15)" class="py-1 rounded bg-emerald-950/60 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/30 font-bold">+15</button>
+                <button onclick="quickAdjustPlayerPts(${idx}, +25)" class="py-1 rounded bg-emerald-950/60 hover:bg-emerald-900 text-emerald-300 border border-emerald-500/30 font-bold">+25</button>
+              </div>
+
+              <!-- Progress & Reset Details -->
+              <div class="space-y-1 text-xs pt-1">
+                <div class="flex justify-between">
+                  <span class="text-slate-400">ไป ${rEval.nextRankName}:</span>
+                  <strong class="font-mono text-emerald-400">ขาด ${rEval.ptsNeededNext} แต้ม</strong>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-400">ห่าง Top 500:</span>
+                  <strong class="font-mono ${rEval.isConquerorEligible ? 'text-emerald-400' : 'text-red-400'}">
+                    ${rEval.isConquerorEligible ? 'ผ่านเกณฑ์แล้ว!' : `-${rEval.ptsToConqueror.toLocaleString()} แต้ม`}
+                  </strong>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-slate-400">รีแรงค์ซีซั่นหน้า:</span>
+                  <strong class="font-mono text-sky-300">${sEval.resetRankName} (${sEval.resetPoints.toLocaleString()})</strong>
+                </div>
+                <div class="flex justify-between text-[11px] text-slate-400 pt-1 border-t border-slate-800/80">
+                  <span>K/D: <strong class="text-white font-mono">${p.kd}</strong></span>
+                  <span>Win: <strong class="text-white font-mono">${p.winRate}%</strong></span>
+                  <span>การ์ดกันลด: <strong class="text-emerald-300 font-mono">${p.protectionCards} ใบ</strong></span>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onclick="selectSquadMember(${idx}, true)"
+              class="w-full py-2 rounded-xl bg-slate-800 hover:bg-pubgGold hover:text-obsidian text-amber-300 font-bold text-xs transition flex items-center justify-center gap-1.5"
+            >
+              <i class="fa-solid fa-sliders"></i>
+              <span>ดูเจาะลึก / แก้โปรไฟล์ของ ${p.ign}</span>
+            </button>
+          </div>
+        `;
+      }).join('');
+
+      // Render Batch Match Player Input Rows
+      const batchRows = document.getElementById('batchPlayersRows');
+      batchRows.innerHTML = appState.players.map((p, idx) => `
+        <div class="grid grid-cols-12 items-center gap-2 bg-slate-900/80 border border-slate-800 rounded-xl px-2.5 py-2">
+          <label class="col-span-5 flex items-center gap-2 text-xs font-bold text-white cursor-pointer truncate">
+            <input type="checkbox" id="batchPlay_${idx}" checked class="w-4 h-4 rounded accent-amber-500" />
+            <span class="truncate">${p.ign}</span>
+          </label>
+          <div class="col-span-3">
+            <input type="number" id="batchKills_${idx}" min="0" max="40" value="${4 - (idx % 2)}" class="w-full bg-obsidian border border-slate-700 rounded-lg px-2 py-1 font-mono text-xs font-bold text-red-400 text-center outline-none" />
+          </div>
+          <div class="col-span-4">
+            <input type="number" id="batchDelta_${idx}" min="-100" max="100" value="18" class="w-full bg-obsidian border border-emerald-500/40 rounded-lg px-2 py-1 font-mono text-xs font-bold text-emerald-400 text-center outline-none" />
+          </div>
+        </div>
+      `).join('');
+
+      // Render Squad Match History Table
+      renderSquadHistoryTable();
+    }
+
+    function quickUpdatePlayerName(idx, newName) {
+      appState.players[idx].ign = newName || `PLAYER ${idx + 1}`;
+      saveState(false);
+      renderSquadSelectorBar();
+    }
+
+    function quickUpdatePlayerRole(idx, newRole) {
+      appState.players[idx].role = newRole;
+      saveState(false);
+      renderAll();
+    }
+
+    function quickUpdatePlayerPts(idx, newPts) {
+      const val = Math.max(1000, Math.min(9999, Math.floor(Number(newPts) || 1000)));
+      appState.players[idx].modes.tpp_squad = val;
+      saveState(false);
+      renderSquadSelectorBar();
+      renderSquadOverviewTab();
+      if (appState.selectedPlayerIdx === idx) {
+        renderIndividualCalculator();
+      }
+    }
+
+    function quickAdjustPlayerPts(idx, delta) {
+      const p = appState.players[idx];
+      p.prevPtsSnapshot = p.modes.tpp_squad;
+      p.modes.tpp_squad = Math.max(1000, Math.min(9999, p.modes.tpp_squad + delta));
+      saveState(false);
+      renderAll();
+      showToast(`${p.ign}: ${delta >= 0 ? '+' + delta : delta} แต้ม &rarr; ${p.modes.tpp_squad.toLocaleString()} แต้ม`, delta >= 0 ? 'success' : 'warn');
+    }
+
+    function fillBatchPreset(ptsVal) {
+      for (let i = 0; i < 4; i++) {
+        const el = document.getElementById(`batchDelta_${i}`);
+        if (el) el.value = ptsVal;
+      }
+    }
+
+    function submitSquadBatchMatch() {
+      const map = document.getElementById('batchMap').value;
+      const placement = Math.max(1, Math.min(100, Number(document.getElementById('batchPlacement').value) || 1));
+      const note = document.getElementById('batchNote').value.trim();
+
+      let totalKills = 0;
+      const summaryParts = [];
+
+      appState.players.forEach((p, idx) => {
+        const played = document.getElementById(`batchPlay_${idx}`).checked;
+        if (!played) return;
+        const kills = Math.max(0, Number(document.getElementById(`batchKills_${idx}`).value) || 0);
+        const delta = Number(document.getElementById(`batchDelta_${idx}`).value) || 0;
+
+        totalKills += kills;
+        p.modes.tpp_squad = Math.max(1000, Math.min(9999, p.modes.tpp_squad + delta));
+        summaryParts.push(`${p.ign} (${delta >= 0 ? '+' + delta : delta})`);
+      });
+
+      if (summaryParts.length === 0) {
+        showToast('กรุณาติ๊กเลือกสมาชิกที่ลงเล่นอย่างน้อย 1 คน', 'warn');
+        return;
+      }
+
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+
+      appState.squadHistory.unshift({
+        id: Date.now(),
+        time: `วันนี้ ${timeStr}`,
+        map,
+        placement,
+        totalKills,
+        summary: summaryParts.join(', '),
+        note: note || (placement === 1 ? '🍗 กินไก่ทั้งตี้!' : `จบอันดับ #${placement}`)
+      });
+
+      document.getElementById('batchNote').value = '';
+      saveState(false);
+      renderAll();
+      showToast('🎉 อัปเดตแต้มสมาชิกทั้งตี้และบันทึกประวัติแมตช์เรียบร้อย!', 'success');
+    }
+
+    function renderSquadHistoryTable() {
+      const tbody = document.getElementById('squadHistoryTableBody');
+      if (!appState.squadHistory.length) {
+        tbody.innerHTML = `<tr><td colspan="6" class="py-6 text-center text-slate-400">ยังไม่มีประวัติแมตช์ของทีม ลองบันทึกผลแมตช์ด้านซ้ายได้เลย!</td></tr>`;
+        return;
+      }
+      tbody.innerHTML = appState.squadHistory.map(item => `
+        <tr class="hover:bg-slate-800/40 transition">
+          <td class="py-2.5 px-3">
+            <span class="font-bold text-white">${item.map}</span>
+            <span class="block text-[10px] font-mono text-slate-400">${item.time}</span>
+          </td>
+          <td class="py-2.5 px-3 text-center font-mono font-extrabold ${item.placement === 1 ? 'text-pubgGold' : 'text-slate-200'}">
+            #${item.placement}
+          </td>
+          <td class="py-2.5 px-3 text-center font-mono font-bold text-red-400">
+            ${item.totalKills}
+          </td>
+          <td class="py-2.5 px-3 text-emerald-300 font-mono text-[11px]">
+            ${item.summary}
+          </td>
+          <td class="py-2.5 px-3 text-slate-300">${item.note}</td>
+          <td class="py-2.5 px-3 text-center">
+            <button onclick="deleteSquadHistoryItem(${item.id})" class="text-slate-500 hover:text-red-400">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function deleteSquadHistoryItem(id) {
+      appState.squadHistory = appState.squadHistory.filter(x => x.id !== id);
+      saveState(false);
+      renderSquadHistoryTable();
+    }
+
+    function clearSquadMatchHistory() {
+      openConfirmModal(
+        'ยืนยันการล้างประวัติแมตช์ของทีม',
+        'ต้องการล้างประวัติแมตช์ทั้งหมดใช่หรือไม่? (แต้มปัจจุบันของสมาชิกทั้ง 4 คนจะยังอยู่ครบ)',
+        () => {
+          appState.squadHistory = [];
+          saveState(false);
+          renderSquadHistoryTable();
+          showToast('ล้างประวัติแมตช์เรียบร้อยแล้ว', 'info');
+        }
+      );
+    }
+
+    // =====================================================================
+    // TAB 2: INDIVIDUAL RANK & SEASON RESET CALCULATOR
+    // =====================================================================
+    function getActivePlayer() {
+      return appState.players[appState.selectedPlayerIdx] || appState.players[0];
+    }
+
+    function updateActivePlayerProfile() {
+      const p = getActivePlayer();
+      p.ign = document.getElementById('profNameInput').value || `PLAYER ${p.id + 1}`;
+      p.uid = document.getElementById('profUidInput').value || '';
+      p.role = document.getElementById('profRoleInput').value;
+      p.kd = Number(document.getElementById('profKdInput').value) || 0;
+      p.winRate = Number(document.getElementById('profWinRateInput').value) || 0;
+      p.protectionCards = Math.max(0, Number(document.getElementById('profCardsInput').value) || 0);
+
+      saveState(false);
+      renderSquadSelectorBar();
+      renderSquadOverviewTab();
+      document.getElementById('calcActivePlayerTitle').textContent = p.ign;
+      document.getElementById('milestonePlayerName').textContent = p.ign;
+      document.getElementById('calcRoleBadge').textContent = p.role;
+    }
+
+    function copyActivePlayerUid() {
+      const p = getActivePlayer();
+      copyTextToClipboard(p.uid, `คัดลอก UID ของ ${p.ign} (${p.uid}) แล้ว!`);
+    }
+
+    function handlePlayerModeSelect(modeId) {
+      const p = getActivePlayer();
+      p.activeMode = modeId;
+      saveState(false);
+      renderIndividualCalculator();
+    }
+
+    function handleActivePlayerPointsInput(val) {
+      const p = getActivePlayer();
+      const num = Math.max(1000, Math.min(9999, Math.floor(Number(val) || 1000)));
+      p.modes[p.activeMode] = num;
+      saveState(false);
+      renderSquadSelectorBar();
+      renderSquadOverviewTab();
+      renderIndividualCalculator();
+      renderPromoAndSixModesTab();
+    }
+
+    function adjustActivePlayerPoints(delta) {
+      const p = getActivePlayer();
+      const cur = p.modes[p.activeMode];
+      p.prevPtsSnapshot = cur;
+      p.modes[p.activeMode] = Math.max(1000, Math.min(9999, cur + delta));
+      document.getElementById('undoPointBtn').classList.remove('hidden');
+      saveState(false);
+      renderAll();
+      showToast(`${p.ign}: ปรับแต้ม ${delta >= 0 ? '+' + delta : delta} &rarr; ${p.modes[p.activeMode].toLocaleString()}`, 'success');
+    }
+
+    function undoPlayerPoints() {
+      const p = getActivePlayer();
+      if (p.prevPtsSnapshot !== null) {
+        p.modes[p.activeMode] = p.prevPtsSnapshot;
+        p.prevPtsSnapshot = null;
+        document.getElementById('undoPointBtn').classList.add('hidden');
+        saveState(false);
+        renderAll();
+        showToast('ย้อนกลับแต้มเดิมเรียบร้อยแล้ว', 'info');
+      }
+    }
+
+    function handleGlobalConqChange(val) {
+      appState.conqThreshold = Math.max(4200, Math.min(9999, Math.floor(Number(val) || 5850)));
+      saveState(false);
+      renderAll();
+    }
+
+    function handleActivePlayerAvgPts(val) {
+      const p = getActivePlayer();
+      p.avgPtsPerMatch = Math.max(1, Math.min(100, Number(val) || 15));
+      saveState(false);
+      renderIndividualCalculator();
+    }
+
+    function renderIndividualCalculator() {
+      const p = getActivePlayer();
+      const modeId = p.activeMode || 'tpp_squad';
+      const pts = p.modes[modeId] || 5000;
+      const avgPts = Math.max(1, Number(p.avgPtsPerMatch) || 15);
+      const conqCutoff = appState.conqThreshold;
+
+      // Sync Profile Header
+      document.getElementById('calcPlayerSlotBadge').textContent = `คนที่ #${p.id + 1}`;
+      document.getElementById('calcActivePlayerTitle').textContent = p.ign;
+      document.getElementById('milestonePlayerName').textContent = p.ign;
+      document.getElementById('profNameInput').value = p.ign;
+      document.getElementById('profUidInput').value = p.uid;
+      document.getElementById('profRoleInput').value = p.role;
+      document.getElementById('profKdInput').value = p.kd;
+      document.getElementById('profWinRateInput').value = p.winRate;
+      document.getElementById('profCardsInput').value = p.protectionCards;
+      document.getElementById('calcRoleBadge').textContent = p.role;
+
+      // Sync Calculator Inputs
+      document.getElementById('calcModeSelect').value = modeId;
+      document.getElementById('currentPointsInput').value = pts;
+      document.getElementById('currentPointsSlider').value = Math.min(8000, pts);
+      document.getElementById('conqThresholdInput').value = conqCutoff;
+      document.getElementById('avgPtsPerMatchInput').value = avgPts;
+
+      const rEval = evaluateRank(pts, conqCutoff);
+      const sEval = evaluateSeasonReset(pts);
+
+      document.getElementById('rankEmblemContainer').innerHTML = getRankEmblemSVG(rEval.tierGroup, rEval.stars, rEval.isConquerorEligible);
+      document.getElementById('currentRankTitle').textContent = rEval.isConquerorEligible ? `Conqueror (${rEval.stars}★)` : rEval.rankName;
+      document.getElementById('currentStarVisual').textContent = rEval.starLabel;
+      document.getElementById('nextRankName').textContent = rEval.nextRankName;
+      document.getElementById('nextRankTargetPts').textContent = `${rEval.nextTargetPts.toLocaleString()} แต้ม`;
+      document.getElementById('nextRankProgressBar').style.width = `${rEval.progressPct}%`;
+      document.getElementById('ptsNeededNext').textContent = rEval.ptsNeededNext.toLocaleString();
+      document.getElementById('matchesNeededNext').textContent = Math.ceil(rEval.ptsNeededNext / avgPts).toLocaleString();
+
+      // Promotion Alert
+      const promoAlert = document.getElementById('promoEligibilityAlert');
+      if (pts < 4200) {
+        promoAlert.innerHTML = `<i class="fa-solid fa-medal text-pubgGold mr-1"></i> อีก <strong>${(4200 - pts).toLocaleString()} แต้ม</strong> ถึงเกณฑ์สอบ <strong>Ace (4,200)</strong> (Erangel Top 15 / Livik Top 8 ติดกัน 3 เกม)`;
+      } else if (pts < 4700) {
+        promoAlert.innerHTML = `<i class="fa-solid fa-medal text-pubgGold mr-1"></i> อีก <strong>${(4700 - pts).toLocaleString()} แต้ม</strong> ถึงเกณฑ์สอบ <strong>Ace Master (4,700)</strong> (ติดกัน 4 เกม)`;
+      } else if (pts < 5200) {
+        promoAlert.innerHTML = `<i class="fa-solid fa-medal text-pubgGold mr-1"></i> อีก <strong>${(5200 - pts).toLocaleString()} แต้ม</strong> ถึงเกณฑ์สอบ <strong>Ace Dominator (5,200)</strong> (ติดกัน 5 เกม)`;
+      } else {
+        promoAlert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 mr-1"></i> แต้มผ่านเกณฑ์สูงสุด <strong>Ace Dominator (5,200+)</strong> พร้อมลุ้นติด Top 500 Conqueror!`;
+      }
+
+      // Conqueror Banner
+      const conqBanner = document.getElementById('conquerorStatusBanner');
+      if (rEval.isConquerorEligible) {
+        conqBanner.className = 'rounded-xl p-3.5 border bg-emerald-500/15 border-emerald-500/40 text-emerald-200 text-xs';
+        conqBanner.innerHTML = `👑 <strong>${p.ign} ผ่านเกณฑ์ Top 500 แล้ว!</strong> (+${(pts - conqCutoff).toLocaleString()} แต้มเหนือเกณฑ์) รอรับป้ายตอนรีเซ็ต ${appState.settings.dailyResetTime} น.`;
+      } else {
+        conqBanner.className = 'rounded-xl p-3.5 border bg-red-500/10 border-red-500/35 text-slate-200 text-xs flex items-center justify-between';
+        conqBanner.innerHTML = `
+          <span>🔥 ห่าง <strong>Conqueror (${conqCutoff.toLocaleString()})</strong> อีก <strong class="text-red-400 font-mono">${rEval.ptsToConqueror.toLocaleString()}</strong> แต้ม (~${Math.ceil(rEval.ptsToConqueror / avgPts)} เกม)</span>
+          <button onclick="switchTab('tab-planner')" class="px-2.5 py-1 rounded-lg bg-conqRed text-white font-bold">วางแผน</button>
+        `;
+      }
+
+      // Reset Sim
+      document.getElementById('resetEmblemContainer').innerHTML = getRankEmblemSVG(sEval.resetTierGroup, 0, false);
+      document.getElementById('postResetRankName').textContent = sEval.resetRankName;
+      document.getElementById('postResetPoints').textContent = `${sEval.resetPoints.toLocaleString()} แต้ม`;
+      document.getElementById('pointsDroppedOnReset').textContent = sEval.droppedPts > 0 ? `-${sEval.droppedPts.toLocaleString()} แต้ม` : 'ไม่ลดแต้ม';
+      document.getElementById('pointsDropPercent').textContent = `ลดลง ${sEval.dropPct}%`;
+
+      if (sEval.nextResetBracketPts) {
+        document.getElementById('ptsToMaxResetBracket').textContent = `อีก +${(sEval.nextResetBracketPts - pts).toLocaleString()}`;
+        document.getElementById('maxResetBracketHint').textContent = `ถึง ${sEval.nextResetBracketPts.toLocaleString()} รีได้ ${sEval.nextResetRankName}`;
+      } else {
+        document.getElementById('ptsToMaxResetBracket').textContent = 'สูงสุดแล้ว!';
+        document.getElementById('maxResetBracketHint').textContent = 'เพดาน 5,300+ รีได้ 3,100 แต้ม';
+      }
+
+      const toAce = Math.max(0, 4200 - sEval.resetPoints);
+      const toMaster = Math.max(0, 4700 - sEval.resetPoints);
+      const toDom = Math.max(0, 5200 - sEval.resetPoints);
+      document.getElementById('newSeasonToAcePts').textContent = `+${toAce.toLocaleString()}`;
+      document.getElementById('newSeasonToAceMatches').textContent = Math.ceil(toAce / avgPts);
+      document.getElementById('newSeasonToMasterPts').textContent = `+${toMaster.toLocaleString()}`;
+      document.getElementById('newSeasonToMasterMatches').textContent = Math.ceil(toMaster / avgPts);
+      document.getElementById('newSeasonToDomPts').textContent = `+${toDom.toLocaleString()}`;
+      document.getElementById('newSeasonToDomMatches').textContent = Math.ceil(toDom / avgPts);
+
+      // Milestones Table
+      const milestones = [
+        { name: 'Gold V',               target: 2000, rule: 'ปลดล็อกชุดเซ็ตประจำซีซั่น' },
+        { name: 'Platinum V',           target: 2500, rule: 'ปลดล็อกไอเทมระดับ Platinum' },
+        { name: 'Diamond V',            target: 3000, rule: 'ปลดล็อกสกินปืนประจำซีซั่น' },
+        { name: 'Crown V',              target: 3500, rule: 'รับการ์ดป้องกันแต้มแรงค์' },
+        { name: 'Ace (0★)',             target: 4200, rule: 'สอบเลื่อนขั้น 3 เกมติด (Erangel Top 15 / Livik Top 8)' },
+        { name: 'Ace Master (5★)',      target: 4700, rule: 'สอบเลื่อนขั้น 4 เกมติด (Erangel Top 12 / Livik Top 6)' },
+        { name: 'Ace Dominator (10★)',  target: 5200, rule: 'สอบเลื่อนขั้น 5 เกมติด (Erangel Top 10 / Livik Top 5)' },
+        { name: 'Ace Dominator (11★+)', target: 5300, rule: 'เพดานรีแรงค์สูงสุด: เริ่มซีซั่นหน้าที่ Diamond IV (3,100)' },
+        { name: 'Conqueror (Top 500)',  target: conqCutoff, rule: `ติด Top 500 เซิร์ฟเวอร์ ก่อนรีเซ็ต ${appState.settings.dailyResetTime} น.` }
+      ];
+
+      document.getElementById('milestoneTableBody').innerHTML = milestones.map(m => {
+        const reached = pts >= m.target;
+        const diff = m.target - pts;
+        const rSim = evaluateSeasonReset(m.target);
+        return `
+          <tr class="hover:bg-slate-800/40 ${reached ? 'bg-emerald-950/10' : ''}">
+            <td class="py-2 px-3 font-bold ${m.name.includes('Conqueror') ? 'text-conqRed' : 'text-white'}">${m.name}</td>
+            <td class="py-2 px-3 text-right font-mono text-pubgGold font-semibold">${m.target.toLocaleString()}</td>
+            <td class="py-2 px-3 text-center">
+              <span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${reached ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/15 text-amber-300'}">
+                ${reached ? '✓ ผ่านแล้ว' : 'กำลังไต่'}
+              </span>
+            </td>
+            <td class="py-2 px-3 text-right font-mono ${reached ? 'text-emerald-400' : 'text-red-400'}">
+              ${reached ? `+${Math.abs(diff).toLocaleString()}` : `-${diff.toLocaleString()}`}
+            </td>
+            <td class="py-2 px-3 text-right font-mono text-slate-300">${reached ? '-' : `~${Math.ceil(diff / avgPts)} เกม`}</td>
+            <td class="py-2 px-3 text-xs text-slate-300">${m.rule}</td>
+            <td class="py-2 px-3 text-right font-mono text-sky-300">${rSim.resetRankName} (${rSim.resetPoints.toLocaleString()})</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // =====================================================================
+    // TAB 3: CONQUEROR PLANNER & MATCH RATING SIMULATOR
+    // =====================================================================
+    function syncPlannerFromActivePlayer() {
+      const p = getActivePlayer();
+      document.getElementById('planPlayerName').textContent = p.ign;
+      document.getElementById('simApplyPlayerName').textContent = p.ign;
+      document.getElementById('planCurrentPts').value = p.modes.tpp_squad;
+      document.getElementById('planServerCutoff').value = appState.conqThreshold;
+      calculateConquerorPlan();
+    }
+
+    function calculateConquerorPlan() {
+      const p = getActivePlayer();
+      const curPts = Number(document.getElementById('planCurrentPts').value) || p.modes.tpp_squad;
+      const cutoff = Number(document.getElementById('planServerCutoff').value) || appState.conqThreshold;
+      const inflation = Math.max(0, Number(document.getElementById('planDailyInflation').value) || 25);
+      const days = Math.max(1, Math.min(30, Number(document.getElementById('planTargetDays').value) || 3));
+      const avgPts = Math.max(1, Number(p.avgPtsPerMatch) || 15);
+      const buffer = 20;
+
+      const finalTarget = Math.max(5200, cutoff + inflation * days + buffer);
+      const totalNeed = Math.max(0, finalTarget - curPts);
+      const dailyQuota = Math.ceil(totalNeed / days);
+      const dailyGames = Math.ceil(dailyQuota / avgPts);
+
+      document.getElementById('planFinalTargetPts').textContent = finalTarget.toLocaleString();
+      document.getElementById('planDailyPtsQuota').textContent = `+${dailyQuota.toLocaleString()} แต้ม`;
+      document.getElementById('planMatchesPerDay').textContent = `${dailyGames} เกม (~${((dailyGames * 24) / 60).toFixed(1)} ชม.)`;
+
+      let rows = '';
+      for (let d = 1; d <= days; d++) {
+        const estCut = Math.max(5200, cutoff + inflation * d);
+        const dayGoal = Math.min(finalTarget, curPts + dailyQuota * d);
+        rows += `
+          <tr class="hover:bg-slate-800/40">
+            <td class="py-2 px-2.5 font-bold text-white">วันที่ ${d}</td>
+            <td class="py-2 px-2.5 text-right font-mono text-red-400">${estCut.toLocaleString()}</td>
+            <td class="py-2 px-2.5 text-right font-mono text-amber-300 font-bold">+${dailyQuota.toLocaleString()}</td>
+            <td class="py-2 px-2.5 text-right font-mono text-pubgGold font-bold">${dayGoal.toLocaleString()}</td>
+            <td class="py-2 px-2.5 text-right font-mono text-emerald-400">${dailyGames} เกม</td>
+          </tr>
+        `;
+      }
+      document.getElementById('plannerScheduleBody').innerHTML = rows;
+    }
+
+    function runMatchPointSimulator() {
+      const tier = document.getElementById('simTierGroup').value;
+      const place = Math.max(1, Math.min(100, Number(document.getElementById('simPlacement').value) || 1));
+      const survMin = Math.max(1, Math.min(35, Number(document.getElementById('simSurvivalMin').value) || 20));
+      const kills = Math.max(0, Number(document.getElementById('simKills').value) || 0);
+      const dmg = Math.max(0, Number(document.getElementById('simDamage').value) || 0);
+      const revives = Math.max(0, Number(document.getElementById('simRevives').value) || 0);
+
+      const tierMultipliers = {
+        Gold_Plat: { base: 14, earlyPenalty: -15, killWeight: 2.2 },
+        Diamond:   { base: 10, earlyPenalty: -22, killWeight: 1.8 },
+        Crown:     { base: 7,  earlyPenalty: -28, killWeight: 1.5 },
+        Ace:       { base: 4,  earlyPenalty: -34, killWeight: 1.2 },
+        AceMaster: { base: 2,  earlyPenalty: -39, killWeight: 1.0 },
+        AceDom:    { base: 0,  earlyPenalty: -44, killWeight: 0.9 }
+      };
+      const cfg = tierMultipliers[tier] || tierMultipliers.Ace;
+
+      // Calculate Survival Points
+      let survPts = 0;
+      if (place <= 10) {
+        const topBonus = (11 - place) * 1.4;
+        survPts = Math.round(cfg.base + topBonus + (survMin - 15) * 0.45);
+      } else if (place <= 35) {
+        survPts = Math.round(cfg.base - (place - 10) * 0.7 + (survMin - 12) * 0.3);
+      } else {
+        survPts = Math.round(cfg.earlyPenalty * ((place - 30) / 70));
+      }
+
+      // Kill + Damage Points
+      const killPts = Math.min(18, Math.round(kills * cfg.killWeight + (dmg / 250)));
+      const supPts = Math.min(4, Math.round(revives * 1.0));
+      const total = survPts + killPts + supPts;
+      lastSimulatedPts = total;
+
+      document.getElementById('simSurvPts').textContent = `${survPts >= 0 ? '+' : ''}${survPts}`;
+      document.getElementById('simKillPts').textContent = `+${killPts}`;
+      document.getElementById('simSupportPts').textContent = `+${supPts}`;
+
+      const totalEl = document.getElementById('simTotalPts');
+      totalEl.textContent = `${total >= 0 ? '+' : ''}${total} แต้ม`;
+      totalEl.className = `font-mono text-2xl font-extrabold ${total >= 0 ? 'text-emerald-400' : 'text-red-400'}`;
+
+      const adviceEl = document.getElementById('simCardAdvice');
+      if (total < 0) {
+        adviceEl.innerHTML = `🛡️ <strong>แต้มติดลบ (${total}):</strong> หากเปิดใช้การ์ดป้องกันแต้มจะกลายเป็น <strong>+0 แต้ม</strong> ทันที!`;
+      } else {
+        adviceEl.innerHTML = `✅ <strong>แต้มเป็นบวก:</strong> ไม่เสียการ์ดป้องกันแต้ม สะสมดาวเพิ่มได้ต่อเนื่อง`;
+      }
+    }
+
+    function applySimulatedPtsToActivePlayer() {
+      adjustActivePlayerPoints(lastSimulatedPts);
+    }
+
+    // =====================================================================
+    // TAB 4: TACTICAL DROP ROULETTE & 4-PLAYER SENSITIVITY VAULT
+    // =====================================================================
+    function renderTacticalDropSpots() {
+      const mapName = document.getElementById('tacMapSelect').value;
+      const riskFilter = document.getElementById('tacRiskFilter').value;
+      const spots = MAP_DROP_SPOTS[mapName] || [];
+      const filtered = spots.filter(s => riskFilter === 'ALL' || s.risk === riskFilter);
+
+      const badgeColors = {
+        HOT: 'bg-red-500/20 text-red-300 border-red-500/40',
+        BALANCED: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+        SAFE: 'bg-emerald-500/20 text-emerald-300 border-emerald-500/40'
+      };
+
+      document.getElementById('dropSpotsList').innerHTML = filtered.map(s => `
+        <div class="bg-slate-900/85 border border-slate-800 rounded-xl p-3 space-y-1">
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white text-xs sm:text-sm">${s.name}</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeColors[s.risk]}">${s.risk}</span>
+          </div>
+          <p class="text-[11px] text-slate-400 leading-relaxed">${s.tip}</p>
+        </div>
+      `).join('');
+    }
+
+    function rollRandomDropSpot() {
+      const mapName = document.getElementById('tacMapSelect').value;
+      const riskFilter = document.getElementById('tacRiskFilter').value;
+      const spots = (MAP_DROP_SPOTS[mapName] || []).filter(s => riskFilter === 'ALL' || s.risk === riskFilter);
+      if (!spots.length) return;
+      const picked = spots[Math.floor(Math.random() * spots.length)];
+
+      document.getElementById('rolledSpotName').textContent = `${picked.name} (${mapName})`;
+      document.getElementById('rolledSpotTip').textContent = picked.tip;
+      document.getElementById('rolledSpotBadge').textContent = picked.risk;
+      showToast(`🎲 สุ่มได้เมือง: ${picked.name} (${mapName})!`, 'info');
+    }
+
+    function renderSensitivityVault() {
+      const container = document.getElementById('sensitivityVaultGrid');
+      container.innerHTML = appState.players.map((p, idx) => `
+        <div class="bg-slate-900/85 border border-slate-800 rounded-2xl p-4 space-y-3">
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <span class="font-extrabold text-amber-400 text-sm">${p.ign}</span>
+            <span class="text-[11px] text-cyan-300">${p.role}</span>
+          </div>
+
+          <div>
+            <label class="block text-[10px] text-slate-400 mb-1">โค้ดความไว (Sensitivity Code)</label>
+            <div class="flex gap-1">
+              <input
+                type="text"
+                value="${p.vault.sensCode}"
+                oninput="updatePlayerVault(${idx}, 'sensCode', this.value)"
+                class="w-full bg-obsidian border border-slate-700 rounded-lg px-2.5 py-1.5 font-mono text-xs text-emerald-300 outline-none"
+              />
+              <button onclick="copyTextToClipboard('${p.vault.sensCode}', 'คัดลอกโค้ดความไวของ ${p.ign} แล้ว!')" class="px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs">
+                <i class="fa-regular fa-copy"></i>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[10px] text-slate-400 mb-1">โค้ดปุ่มกด (Layout Control Code)</label>
+            <div class="flex gap-1">
+              <input
+                type="text"
+                value="${p.vault.layoutCode}"
+                oninput="updatePlayerVault(${idx}, 'layoutCode', this.value)"
+                class="w-full bg-obsidian border border-slate-700 rounded-lg px-2.5 py-1.5 font-mono text-xs text-sky-300 outline-none"
+              />
+              <button onclick="copyTextToClipboard('${p.vault.layoutCode}', 'คัดลอกโค้ดปุ่มกดของ ${p.ign} แล้ว!')" class="px-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs">
+                <i class="fa-regular fa-copy"></i>
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label class="block text-[10px] text-slate-400 mb-1">ปืนคู่ใจ / โน้ตการตั้งค่า</label>
+            <input
+              type="text"
+              value="${p.vault.weapons}"
+              oninput="updatePlayerVault(${idx}, 'weapons', this.value)"
+              class="w-full bg-obsidian border border-slate-700 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none"
+            />
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function updatePlayerVault(idx, field, val) {
+      appState.players[idx].vault[field] = val;
+      saveState(false);
+    }
+
+    // =====================================================================
+    // TAB 5: 2026 PROMOTION MATCHES, 6-MODE TABLE & EXPORT/IMPORT
+    // =====================================================================
+    function renderPromoAndSixModesTab() {
+      const p = getActivePlayer();
+      document.getElementById('promoPlayerName').textContent = p.ign;
+      document.getElementById('sixModesPlayerName').textContent = p.ign;
+
+      const promos = [
+        { key: 'ace',       title: 'Ace Promotion (4,200)' },
+        { key: 'master',    title: 'Ace Master Promotion (4,700)' },
+        { key: 'dominator', title: 'Ace Dominator Promotion (5,200)' }
+      ];
+
+      document.getElementById('promotionCardsContainer').innerHTML = promos.map(cfg => {
+        const pr = p.promotions[cfg.key];
+        const topGoal = pr.map === 'Erangel' ? pr.erangelTop : pr.livikTop;
+        let slots = '';
+        for (let i = 0; i < pr.reqStreak; i++) {
+          const passed = i < pr.passCount;
+          slots += `
+            <div class="flex-1 py-2 rounded-lg border text-center font-mono text-xs ${
+              passed ? 'bg-emerald-500/20 border-emerald-400 text-emerald-300 font-bold' : 'bg-slate-900 border-slate-700 text-slate-500'
+            }">
+              เกม ${i + 1}: ${passed ? '✓' : '•'}
+            </div>
+          `;
+        }
+
+        return `
+          <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between space-y-3">
+            <div class="space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="font-bold text-white text-sm">${cfg.title}</span>
+                <span class="px-2 py-0.5 rounded-full text-[11px] font-bold ${pr.promoted ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}">
+                  ${pr.promoted ? '🏆 เลื่อนขั้นแล้ว' : `${pr.passCount}/${pr.reqStreak} เกม`}
+                </span>
+              </div>
+              <div class="text-xs text-slate-400">
+                เงื่อนไข: ติด <strong>Top ${topGoal} (${pr.map})</strong> ติดกัน ${pr.reqStreak} เกม
+                <span class="block text-[11px] ${pr.protUsed ? 'text-red-400' : 'text-emerald-400'}">
+                  ${pr.protUsed ? 'ใช้สิทธิ์ป้องกันการพลาด 1 ครั้งไปแล้ว' : '🛡️ มีสิทธิ์ป้องกันการพลาดฟรี 1 ครั้ง'}
+                </span>
+              </div>
+              <div class="flex gap-1.5">${slots}</div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-2">
+              <button onclick="recordPlayerPromo('${cfg.key}', true)" class="py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs">
+                ✓ ผ่านเกณฑ์
+              </button>
+              <button onclick="recordPlayerPromo('${cfg.key}', false)" class="py-1.5 rounded-xl bg-red-600/80 hover:bg-red-600 text-white font-bold text-xs">
+                ✕ พลาด
+              </button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Render 6 Modes Table for Active Player
+      document.getElementById('sixModesTableBody').innerHTML = GAME_MODES.map(m => {
+        const mPts = p.modes[m.id] || 2000;
+        const rEv = evaluateRank(mPts, appState.conqThreshold);
+        const sEv = evaluateSeasonReset(mPts);
+        return `
+          <tr class="hover:bg-slate-800/40">
+            <td class="py-2 px-2.5 font-semibold text-white">${m.name}</td>
+            <td class="py-2 px-2.5 text-center">
+              <input
+                type="number"
+                min="1000"
+                max="9999"
+                value="${mPts}"
+                oninput="updateActivePlayerModePts('${m.id}', this.value)"
+                class="w-24 bg-obsidian border border-amber-500/50 rounded-lg px-2 py-1 font-mono text-xs font-bold text-pubgGold text-center outline-none"
+              />
+            </td>
+            <td class="py-2 px-2.5 font-bold text-amber-300">${rEv.rankName}</td>
+            <td class="py-2 px-2.5 text-right font-mono text-emerald-400">+${rEv.ptsNeededNext}</td>
+            <td class="py-2 px-2.5 font-mono text-sky-300">${sEv.resetRankName} (${sEv.resetPoints.toLocaleString()})</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function recordPlayerPromo(key, isPass) {
+      const p = getActivePlayer();
+      const pr = p.promotions[key];
+      if (isPass) {
+        pr.passCount = Math.min(pr.reqStreak, pr.passCount + 1);
+        if (pr.passCount >= pr.reqStreak) pr.promoted = true;
+      } else {
+        if (!pr.protUsed) {
+          pr.protUsed = true;
+          showToast('🛡️ ใช้สิทธิ์ป้องกันการพลาด 1 ครั้ง! จำนวนเกมต่อเนื่องไม่ถูกรีเซ็ต', 'warn');
+        } else {
+          pr.passCount = 0;
+          pr.protUsed = false;
+          pr.promoted = false;
+          showToast('พลาดเกินสิทธิ์ป้องกัน เริ่มนับจำนวนเกมต่อเนื่องใหม่', 'warn');
+        }
+      }
+      saveState(false);
+      renderPromoAndSixModesTab();
+    }
+
+    function resetActivePlayerPromos() {
+      const p = getActivePlayer();
+      ['ace', 'master', 'dominator'].forEach(k => {
+        p.promotions[k].passCount = 0;
+        p.promotions[k].protUsed = false;
+        p.promotions[k].promoted = false;
+      });
+      saveState(false);
+      renderPromoAndSixModesTab();
+      showToast(`รีเซ็ตผลสอบของ ${p.ign} เรียบร้อย`, 'info');
+    }
+
+    function updateActivePlayerModePts(modeId, val) {
+      const p = getActivePlayer();
+      p.modes[modeId] = Math.max(1000, Math.min(9999, Math.floor(Number(val) || 1000)));
+      saveState(false);
+      renderSquadSelectorBar();
+      renderSquadOverviewTab();
+      renderIndividualCalculator();
+      renderPromoAndSixModesTab();
+    }
+
+    // Settings, Export CSV & JSON
+    function syncSettingsInputs() {
+      document.getElementById('settingSeasonName').value = appState.settings.seasonName;
+      document.getElementById('settingDailyResetTime').value = appState.settings.dailyResetTime;
+      document.getElementById('settingSeasonEndDate').value = appState.settings.seasonEndDate;
+      document.getElementById('settingResetOffset').value = appState.settings.resetOffset;
+      document.getElementById('headerSeasonBadge').textContent = appState.settings.seasonName;
+      document.getElementById('headerResetClockLabel').textContent = `(${appState.settings.dailyResetTime})`;
+    }
+
+    function saveCustomSettings() {
+      appState.settings.seasonName = document.getElementById('settingSeasonName').value || 'C11S33 • 2026';
+      appState.settings.dailyResetTime = document.getElementById('settingDailyResetTime').value || '07:20';
+      appState.settings.seasonEndDate = document.getElementById('settingSeasonEndDate').value;
+      appState.settings.resetOffset = Number(document.getElementById('settingResetOffset').value) || 0;
+      document.getElementById('headerSeasonBadge').textContent = appState.settings.seasonName;
+      document.getElementById('headerResetClockLabel').textContent = `(${appState.settings.dailyResetTime})`;
+      saveState(false);
+      renderAll();
+    }
+
+    function exportSquadCSV() {
+      let csv = '\uFEFFลำดับ,ชื่อในเกม (IGN),UID,ตำแหน่ง (Role),แต้ม TPP Squad,แรงค์ปัจจุบัน,ขาดอีกกี่แต้ม,ห่าง Conqueror,แรงค์หลังรีซีซั่น,แต้มเริ่มซีซั่นใหม่,K/D,Win Rate %,การ์ดกันลด\n';
+      appState.players.forEach((p, idx) => {
+        const pts = p.modes.tpp_squad;
+        const r = evaluateRank(pts, appState.conqThreshold);
+        const s = evaluateSeasonReset(pts);
+        csv += `${idx + 1},"${p.ign}","${p.uid}","${p.role}",${pts},"${r.rankName}",${r.ptsNeededNext},${r.ptsToConqueror},"${s.resetRankName}",${s.resetPoints},${p.kd},${p.winRate},${p.protectionCards}\n`;
+      });
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `PUBGM_Squad_4Players_${new Date().toISOString().slice(0, 10)}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('📊 ส่งออกตารางสรุปทั้งทีม 4 คน (.CSV เปิดใน Excel) เรียบร้อย!', 'success');
+    }
+
+    function exportFullBackupJSON() {
+      const dataStr = JSON.stringify(appState, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `PUBGM_Squad_Backup_${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('ดาวน์โหลดไฟล์สำรองข้อมูลทั้งทีม (.JSON) เรียบร้อย!', 'success');
+    }
+
+    function importFullBackupJSON(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const parsed = JSON.parse(e.target.result);
+          if (!parsed || !Array.isArray(parsed.players)) throw new Error('Invalid');
+          appState = { ...getDefaultState(), ...parsed };
+          saveState(true);
+          renderAll();
+        } catch (err) {
+          showToast('ไฟล์ .JSON ไม่ถูกต้อง', 'warn');
+        }
+      };
+      reader.readAsText(file);
+    }
+
+    function confirmResetAllData() {
+      openConfirmModal(
+        'ยืนยันการคืนค่าเริ่มต้นทั้งหมด',
+        'ต้องการรีเซ็ตข้อมูลสมาชิกทั้ง 4 คนกลับเป็นค่าเริ่มต้นใช่หรือไม่?',
+        () => {
+          appState = getDefaultState();
+          saveState(false);
+          renderAll();
+          showToast('รีเซ็ตข้อมูลกลับเป็นค่าเริ่มต้นเรียบร้อยแล้ว', 'info');
+        }
+      );
+    }
+
+    // Live Clocks
+    function updateLiveTimers() {
+      const now = new Date();
+      const parts = (appState.settings.dailyResetTime || '07:20').split(':');
+      const nextReset = new Date(now);
+      nextReset.setHours(parseInt(parts[0], 10) || 7, parseInt(parts[1], 10) || 20, 0, 0);
+      if (now >= nextReset) nextReset.setDate(nextReset.getDate() + 1);
+      const diff = Math.max(0, nextReset - now);
+      const ch = String(Math.floor(diff / 3600000)).padStart(2, '0');
+      const cm = String(Math.floor((diff % 3600000) / 60000)).padStart(2, '0');
+      const cs = String(Math.floor((diff % 60000) / 1000)).padStart(2, '0');
+      document.getElementById('conquerorCountdown').textContent = `${ch}:${cm}:${cs}`;
+
+      const end = new Date(appState.settings.seasonEndDate);
+      const sDiff = end - now;
+      if (isNaN(end.getTime()) || sDiff <= 0) {
+        document.getElementById('seasonCountdown').textContent = 'รีซีซั่นแล้ว';
+      } else {
+        const d = Math.floor(sDiff / 86400000);
+        const h = String(Math.floor((sDiff % 86400000) / 3600000)).padStart(2, '0');
+        document.getElementById('seasonCountdown').textContent = `${d} วัน ${h} ชม.`;
+      }
+    }
+
+    // UI Helpers
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.add('hidden'));
+      document.getElementById(tabId).classList.remove('hidden');
+
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.className = 'tab-btn shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-medium transition flex items-center gap-2 bg-slate-800/80 text-slate-300 hover:bg-slate-800 hover:text-white';
+      });
+      const active = document.getElementById(`btn-${tabId}`);
+      if (active) {
+        active.className = 'tab-btn shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-2 bg-pubgGold text-obsidian shadow-lg shadow-amber-500/20';
+      }
+    }
+
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toastContainer');
+      const toast = document.createElement('div');
+      const styles = {
+        success: 'border-emerald-500/50 bg-slate-900/95 text-emerald-300',
+        warn:    'border-amber-500/50 bg-slate-900/95 text-amber-300',
+        info:    'border-cyan-500/50 bg-slate-900/95 text-cyan-300'
+      };
+      toast.className = `pointer-events-auto flex items-center gap-2.5 px-4 py-3 rounded-xl border shadow-xl text-xs font-semibold transition-all duration-300 ${styles[type] || styles.info}`;
+      toast.innerHTML = `<i class="fa-solid fa-circle-info"></i><span>${message}</span>`;
+      container.appendChild(toast);
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        setTimeout(() => toast.remove(), 250);
+      }, 2800);
+    }
+
+    let confirmCallback = null;
+    function openConfirmModal(title, message, onConfirm) {
+      document.getElementById('confirmModalTitle').textContent = title;
+      document.getElementById('confirmModalMessage').textContent = message;
+      confirmCallback = onConfirm;
+      const modal = document.getElementById('confirmModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeConfirmModal() {
+      const modal = document.getElementById('confirmModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      confirmCallback = null;
+    }
+
+    document.getElementById('confirmCancelBtn').addEventListener('click', closeConfirmModal);
+    document.getElementById('confirmOkBtn').addEventListener('click', () => {
+      if (typeof confirmCallback === 'function') confirmCallback();
+      closeConfirmModal();
+    });
+
+    function renderAll() {
+      syncSettingsInputs();
+      renderSquadSelectorBar();
+      renderSquadOverviewTab();
+      renderIndividualCalculator();
+      syncPlannerFromActivePlayer();
+      runMatchPointSimulator();
+      renderTacticalDropSpots();
+      renderSensitivityVault();
+      renderPromoAndSixModesTab();
+    }
+
+    window.onload = function() {
+      loadInitialState();
+      renderAll();
+      updateLiveTimers();
+      setInterval(updateLiveTimers, 1000);
+    };
+  </script>
+</body>
+</html>
