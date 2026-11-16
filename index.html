@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="th" class="dark">
+<html lang="th" class="dark" translate="no">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="google" content="notranslate" />
   <title>PUBG MOBILE Squad 4-Player Rank Hub & Tactical Companion (2026)</title>
   <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -82,6 +83,23 @@
     .tac-border-crimson {
       border: 1px solid rgba(239, 68, 68, 0.5);
       box-shadow: 0 0 24px rgba(239, 68, 68, 0.15);
+    }
+
+    /* ล็อกความกว้างตัวเลขวินาทีไม่ให้ขยับดันปุ่มอื่น */
+    #conquerorCountdown {
+      font-variant-numeric: tabular-nums;
+      display: inline-block;
+      min-width: 68px;
+      text-align: left;
+      white-space: nowrap;
+    }
+
+    #seasonCountdown {
+      font-variant-numeric: tabular-nums;
+      display: inline-block;
+      min-width: 96px;
+      text-align: left;
+      white-space: nowrap;
     }
 
     input[type=range].tac-slider {
@@ -186,33 +204,33 @@
         </div>
 
         <!-- Timers & Save/Share Action Buttons -->
-        <div class="flex flex-wrap items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2 shrink-0" translate="no">
           <!-- Conqueror Daily Reset Clock -->
-          <div class="bg-slate-900/90 border border-red-500/30 rounded-xl px-2.5 py-1.5 flex items-center gap-2">
+          <div class="notranslate bg-slate-900/90 border border-red-500/30 rounded-xl px-2.5 py-1.5 flex items-center gap-2 shrink-0">
             <i class="fa-solid fa-crown text-conqRed text-xs"></i>
             <div>
-              <div class="text-[10px] text-slate-400 leading-none">รีเซ็ตป้ายแดง <span id="headerResetClockLabel">(07:20)</span></div>
-              <div id="conquerorCountdown" class="font-mono text-xs sm:text-sm font-bold text-red-400">00:00:00</div>
+              <div class="text-[10px] text-slate-400 leading-none whitespace-nowrap">รีเซ็ตป้ายแดง <span id="headerResetClockLabel">(07:20)</span></div>
+              <div id="conquerorCountdown" class="notranslate font-mono text-xs sm:text-sm font-bold text-red-400">00:00:00</div>
             </div>
           </div>
 
           <!-- Season End Clock -->
-          <div class="bg-slate-900/90 border border-amber-500/30 rounded-xl px-2.5 py-1.5 flex items-center gap-2">
+          <div class="notranslate bg-slate-900/90 border border-amber-500/30 rounded-xl px-2.5 py-1.5 flex items-center gap-2 shrink-0">
             <i class="fa-solid fa-hourglass-half text-pubgGold text-xs"></i>
             <div>
-              <div class="text-[10px] text-slate-400 leading-none">จบซีซั่นในอีก</div>
-              <div id="seasonCountdown" class="font-mono text-xs sm:text-sm font-bold text-pubgGold">-- วัน</div>
+              <div class="text-[10px] text-slate-400 leading-none whitespace-nowrap">จบซีซั่นในอีก</div>
+              <div id="seasonCountdown" class="notranslate font-mono text-xs sm:text-sm font-bold text-pubgGold">-- วัน</div>
             </div>
           </div>
 
           <!-- Explicit Save Button -->
-          <button onclick="manualSaveSquadData()" class="px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-obsidian font-bold text-xs sm:text-sm shadow-lg shadow-emerald-500/20 transition flex items-center gap-1.5">
+          <button onclick="manualSaveSquadData()" class="shrink-0 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-obsidian font-bold text-xs sm:text-sm shadow-lg shadow-emerald-500/20 transition flex items-center gap-1.5 whitespace-nowrap">
             <i class="fa-solid fa-floppy-disk"></i>
             <span>บันทึกข้อมูล (Save)</span>
           </button>
 
           <!-- Share Squad Link Button -->
-          <button onclick="copyShareableSquadLink()" class="px-3.5 py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/40 text-cyan-300 font-semibold text-xs sm:text-sm transition flex items-center gap-1.5" title="สร้างลิงก์ส่งให้เพื่อนในทีมเปิดดูข้อมูลทั้ง 4 คนได้ทันที">
+          <button onclick="copyShareableSquadLink()" class="shrink-0 px-3.5 py-2 rounded-xl bg-cyan-500/15 hover:bg-cyan-500/25 border border-cyan-400/40 text-cyan-300 font-semibold text-xs sm:text-sm transition flex items-center gap-1.5 whitespace-nowrap" title="สร้างลิงก์ส่งให้เพื่อนในทีมเปิดดูข้อมูลทั้ง 4 คนได้ทันที">
             <i class="fa-solid fa-share-nodes"></i>
             <span>คัดลอกลิงก์แชร์ทีม</span>
           </button>
@@ -328,7 +346,7 @@
               type="number"
               min="4200"
               max="9999"
-              value="0000"
+              value="5850"
               oninput="handleGlobalConqChange(this.value)"
               class="w-24 bg-obsidian border border-red-500/50 focus:border-conqRed rounded-lg px-2.5 py-1 font-mono text-sm font-bold text-red-400 text-center outline-none"
             />
@@ -848,7 +866,7 @@
     </section>
 
     <!-- =================================================================== -->
-    <!-- TAB 4: ยุทธวิธีทีม, สุ่มจุดโดดร่ม & คลังโค้ดตั้งค่าความไว 4 คน             -->
+    <!-- TAB 4: ยุทธวิธีทีม, สุ่มจุดโดดร่ม & คลังโค้ดตั้งค่าความไว 4 คน              -->
     <!-- =================================================================== -->
     <section id="tab-tactical" class="tab-panel hidden space-y-6">
 
@@ -1193,7 +1211,7 @@
         { name: 'Pochinki', risk: 'HOT', tip: 'ใจกลางแมพ เดือดตั้งแต่โดด เหมาะกับตี้ที่ต้องการเก็บคิลต้นเกม' },
         { name: 'Sosnovka Military Base', risk: 'HOT', tip: 'ของฟาร์มระดับ 3 แน่น ระวังโดนดักสะพานตอนเข้าวง' },
         { name: 'Yasnaya Polyana', risk: 'BALANCED', tip: 'เมืองใหญ่ฟาร์มพอ 4 คนสบาย มีโรงรถและจุดหารถริมถนนเพียบ' },
-        { name: ' Mylta Power & โรงไฟฟ้าเล็ก', risk: 'SAFE', tip: 'ของดี คนไม่แน่นมาก มีรถเกิดตามถนนเลียบชายฝั่ง' },
+        { name: 'Mylta Power & โรงไฟฟ้าเล็ก', risk: 'SAFE', tip: 'ของดี คนไม่แน่นมาก มีรถเกิดตามถนนเลียบชายฝั่ง' },
         { name: 'Zharki / Kameshki', risk: 'SAFE', tip: 'สายเซฟแต้มดัน Conqueror หารถเข้าวงชัวร์ 100% ไม่เสียแต้มต้นเกม' },
         { name: 'Georgopol Containers & เมืองเหนือ', risk: 'BALANCED', tip: 'ฟาร์มไวในเมืองเหนือแล้วดักตี้ที่ขึ้นมาจากตู้คอนเทนเนอร์' }
       ],
@@ -1309,6 +1327,7 @@
 
     let appState = getDefaultState();
     let lastSimulatedPts = 18;
+    let lastRenderedSeasonText = '';
 
     // Encode / Decode State for URL Sharing
     function encodeStateToBase64(stateObj) {
@@ -1330,7 +1349,6 @@
     }
 
     function loadInitialState() {
-      // 1. Check if URL has #squad=...
       if (window.location.hash && window.location.hash.startsWith('#squad=')) {
         const rawCode = window.location.hash.replace('#squad=', '');
         const decoded = decodeStateFromBase64(rawCode);
@@ -1341,7 +1359,6 @@
         }
       }
 
-      // 2. Otherwise load from localStorage
       try {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (raw) {
@@ -1387,7 +1404,6 @@
       document.getElementById('sharedUrlBanner').classList.add('hidden');
     }
 
-    // Clipboard Helper (Works inside iframes & GitHub Pages)
     function copyTextToClipboard(text, successMsg) {
       const textarea = document.createElement('textarea');
       textarea.value = text;
@@ -1660,7 +1676,6 @@
         `;
       }).join('');
 
-      // Also update role names in Tab 4
       appState.players.forEach((p, idx) => {
         document.querySelectorAll(`.role-p${idx}-name`).forEach(el => {
           el.textContent = p.ign;
@@ -1841,7 +1856,6 @@
         </div>
       `).join('');
 
-      // Render Squad Match History Table
       renderSquadHistoryTable();
     }
 
@@ -2067,7 +2081,6 @@
       const avgPts = Math.max(1, Number(p.avgPtsPerMatch) || 15);
       const conqCutoff = appState.conqThreshold;
 
-      // Sync Profile Header
       document.getElementById('calcPlayerSlotBadge').textContent = `คนที่ #${p.id + 1}`;
       document.getElementById('calcActivePlayerTitle').textContent = p.ign;
       document.getElementById('milestonePlayerName').textContent = p.ign;
@@ -2079,7 +2092,6 @@
       document.getElementById('profCardsInput').value = p.protectionCards;
       document.getElementById('calcRoleBadge').textContent = p.role;
 
-      // Sync Calculator Inputs
       document.getElementById('calcModeSelect').value = modeId;
       document.getElementById('currentPointsInput').value = pts;
       document.getElementById('currentPointsSlider').value = Math.min(8000, pts);
@@ -2098,7 +2110,6 @@
       document.getElementById('ptsNeededNext').textContent = rEval.ptsNeededNext.toLocaleString();
       document.getElementById('matchesNeededNext').textContent = Math.ceil(rEval.ptsNeededNext / avgPts).toLocaleString();
 
-      // Promotion Alert
       const promoAlert = document.getElementById('promoEligibilityAlert');
       if (pts < 4200) {
         promoAlert.innerHTML = `<i class="fa-solid fa-medal text-pubgGold mr-1"></i> อีก <strong>${(4200 - pts).toLocaleString()} แต้ม</strong> ถึงเกณฑ์สอบ <strong>Ace (4,200)</strong> (Erangel Top 15 / Livik Top 8 ติดกัน 3 เกม)`;
@@ -2110,7 +2121,6 @@
         promoAlert.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 mr-1"></i> แต้มผ่านเกณฑ์สูงสุด <strong>Ace Dominator (5,200+)</strong> พร้อมลุ้นติด Top 500 Conqueror!`;
       }
 
-      // Conqueror Banner
       const conqBanner = document.getElementById('conquerorStatusBanner');
       if (rEval.isConquerorEligible) {
         conqBanner.className = 'rounded-xl p-3.5 border bg-emerald-500/15 border-emerald-500/40 text-emerald-200 text-xs';
@@ -2123,7 +2133,6 @@
         `;
       }
 
-      // Reset Sim
       document.getElementById('resetEmblemContainer').innerHTML = getRankEmblemSVG(sEval.resetTierGroup, 0, false);
       document.getElementById('postResetRankName').textContent = sEval.resetRankName;
       document.getElementById('postResetPoints').textContent = `${sEval.resetPoints.toLocaleString()} แต้ม`;
@@ -2148,7 +2157,6 @@
       document.getElementById('newSeasonToDomPts').textContent = `+${toDom.toLocaleString()}`;
       document.getElementById('newSeasonToDomMatches').textContent = Math.ceil(toDom / avgPts);
 
-      // Milestones Table
       const milestones = [
         { name: 'Gold V',               target: 2000, rule: 'ปลดล็อกชุดเซ็ตประจำซีซั่น' },
         { name: 'Platinum V',           target: 2500, rule: 'ปลดล็อกไอเทมระดับ Platinum' },
@@ -2250,7 +2258,6 @@
       };
       const cfg = tierMultipliers[tier] || tierMultipliers.Ace;
 
-      // Calculate Survival Points
       let survPts = 0;
       if (place <= 10) {
         const topBonus = (11 - place) * 1.4;
@@ -2261,7 +2268,6 @@
         survPts = Math.round(cfg.earlyPenalty * ((place - 30) / 70));
       }
 
-      // Kill + Damage Points
       const killPts = Math.min(18, Math.round(kills * cfg.killWeight + (dmg / 250)));
       const supPts = Math.min(4, Math.round(revives * 1.0));
       const total = survPts + killPts + supPts;
@@ -2441,7 +2447,6 @@
         `;
       }).join('');
 
-      // Render 6 Modes Table for Active Player
       document.getElementById('sixModesTableBody').innerHTML = GAME_MODES.map(m => {
         const mPts = p.modes[m.id] || 2000;
         const rEv = evaluateRank(mPts, appState.conqThreshold);
@@ -2596,7 +2601,7 @@
       );
     }
 
-    // Live Clocks
+    // Live Clocks (Updated so seasonCountdown only updates when day/hour actually changes)
     function updateLiveTimers() {
       const now = new Date();
       const parts = (appState.settings.dailyResetTime || '07:20').split(':');
@@ -2611,12 +2616,15 @@
 
       const end = new Date(appState.settings.seasonEndDate);
       const sDiff = end - now;
-      if (isNaN(end.getTime()) || sDiff <= 0) {
-        document.getElementById('seasonCountdown').textContent = 'รีซีซั่นแล้ว';
-      } else {
+      let newSeasonText = 'รีซีซั่นแล้ว';
+      if (!isNaN(end.getTime()) && sDiff > 0) {
         const d = Math.floor(sDiff / 86400000);
         const h = String(Math.floor((sDiff % 86400000) / 3600000)).padStart(2, '0');
-        document.getElementById('seasonCountdown').textContent = `${d} วัน ${h} ชม.`;
+        newSeasonText = `${d} วัน ${h} ชม.`;
+      }
+      if (newSeasonText !== lastRenderedSeasonText) {
+        lastRenderedSeasonText = newSeasonText;
+        document.getElementById('seasonCountdown').textContent = newSeasonText;
       }
     }
 
@@ -2694,110 +2702,98 @@
     };
   </script>
 
-<script>
-  // ปลดล็อกให้คลิกพิมพ์และลบตัวเลข/ชื่อได้ทุกช่อง (รองรับการ์ด 4 คนและตารางที่สร้างด้วย JS)
-  (function () {
-    // 1. ดักจังหวะกำลังพิมพ์ (Capture Phase) ไม่ให้หน้าเว็บวาดการ์ดทับหรือเด้งเลข 1000 ระหว่างพิมพ์
-    document.addEventListener('input', function (e) {
-      const el = e.target;
-      if (!el || el.tagName !== 'INPUT') return;
+  <script>
+    // ปลดล็อกให้คลิกพิมพ์และลบตัวเลข/ชื่อได้ทุกช่อง (รองรับการ์ด 4 คนและตารางที่สร้างด้วย JS)
+    (function () {
+      document.addEventListener('input', function (e) {
+        const el = e.target;
+        if (!el || el.tagName !== 'INPUT' || el.type === 'range') return;
 
-      // แถบเลื่อน (Slider) ให้เลื่อนแล้วเปลี่ยนค่าแบบเรียลไทม์ตามปกติ
-      if (el.type === 'range') return;
+        const oninputAttr = el.getAttribute('oninput') || '';
+        if (!oninputAttr) return;
 
-      const oninputAttr = el.getAttribute('oninput') || '';
-      if (!oninputAttr) return;
+        if (el.type === 'number') {
+          e.stopImmediatePropagation();
+          const val = Number(el.value);
+          const minVal = el.min !== '' ? Number(el.min) : 0;
+          const maxVal = el.max !== '' ? Number(el.max) : 99999;
 
-      // กรณีช่องตัวเลขทุกจุด (แต้มในการ์ด 4 คน, แต้มหลัก, เกณฑ์ Top 500, ตาราง 6 โหมด)
-      if (el.type === 'number') {
-        e.stopImmediatePropagation(); // หยุดไม่ให้การ์ดรีเฟรชตัวเองขณะกำลังพิมพ์
+          if (el.value !== '' && !isNaN(val) && val >= minVal && val <= maxVal) {
+            const mPts = oninputAttr.match(/quickUpdatePlayerPts\((\d+)/);
+            if (mPts) {
+              const idx = Number(mPts[1]);
+              appState.players[idx].modes.tpp_squad = Math.floor(val);
+              saveState(false);
+              renderSquadSelectorBar();
+            } else if (oninputAttr.includes('handleActivePlayerPointsInput')) {
+              const p = getActivePlayer();
+              p.modes[p.activeMode] = Math.floor(val);
+              const slider = document.getElementById('currentPointsSlider');
+              if (slider) slider.value = Math.min(8000, Math.floor(val));
+              saveState(false);
+              renderSquadSelectorBar();
+            } else if (oninputAttr.includes('handleGlobalConqChange')) {
+              appState.conqThreshold = Math.floor(val);
+              saveState(false);
+            }
+          }
+          return;
+        }
 
-        // บันทึกค่าลงระบบทันทีเมื่อพิมพ์ตัวเลขครบตามเกณฑ์ (เผื่อผู้ใช้กดปุ่ม Save ด้านบนทันที)
-        const val = Number(el.value);
-        const minVal = el.min !== '' ? Number(el.min) : 0;
-        const maxVal = el.max !== '' ? Number(el.max) : 99999;
-
-        if (el.value !== '' && !isNaN(val) && val >= minVal && val <= maxVal) {
-          const mPts = oninputAttr.match(/quickUpdatePlayerPts\((\d+)/);
-          if (mPts) {
-            const idx = Number(mPts[1]);
-            appState.players[idx].modes.tpp_squad = Math.floor(val);
-            saveState(false);
-            renderSquadSelectorBar();
-          } else if (oninputAttr.includes('handleActivePlayerPointsInput')) {
-            const p = getActivePlayer();
-            p.modes[p.activeMode] = Math.floor(val);
-            const slider = document.getElementById('currentPointsSlider');
-            if (slider) slider.value = Math.min(8000, Math.floor(val));
-            saveState(false);
-            renderSquadSelectorBar();
-          } else if (oninputAttr.includes('handleGlobalConqChange')) {
-            appState.conqThreshold = Math.floor(val);
-            saveState(false);
+        if (oninputAttr.includes('quickUpdatePlayerName')) {
+          e.stopImmediatePropagation();
+          const mName = oninputAttr.match(/quickUpdatePlayerName\((\d+)/);
+          if (mName) {
+            const idx = Number(mName[1]);
+            if (el.value.trim() !== '') {
+              appState.players[idx].ign = el.value.trim();
+              saveState(false);
+              renderSquadSelectorBar();
+            }
           }
         }
-        return;
-      }
+      }, true);
 
-      // กรณีช่องพิมพ์ชื่อในการ์ดทีม 4 คน (พิมพ์และลบได้อิสระโดยไม่ถูกบังคับใส่ชื่อ PLAYER 1 คั่นจังหวะ)
-      if (oninputAttr.includes('quickUpdatePlayerName')) {
-        e.stopImmediatePropagation();
-        const mName = oninputAttr.match(/quickUpdatePlayerName\((\d+)/);
-        if (mName) {
-          const idx = Number(mName[1]);
-          if (el.value.trim() !== '') {
-            appState.players[idx].ign = el.value.trim();
-            saveState(false);
-            renderSquadSelectorBar();
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && e.target && e.target.tagName === 'INPUT') {
+          e.target.blur();
+        }
+      }, true);
+
+      document.addEventListener('change', function (e) {
+        const el = e.target;
+        if (!el || el.tagName !== 'INPUT' || el.type === 'range') return;
+
+        const oninputAttr = el.getAttribute('oninput');
+        if (!oninputAttr) return;
+
+        if (el.type === 'number') {
+          const minVal = el.min !== '' ? Number(el.min) : null;
+          const maxVal = el.max !== '' ? Number(el.max) : null;
+          let val = Number(el.value);
+          if (el.value === '' || isNaN(val)) {
+            val = minVal !== null ? minVal : 1000;
+          } else {
+            if (minVal !== null && val < minVal) val = minVal;
+            if (maxVal !== null && val > maxVal) val = maxVal;
           }
+          el.value = val;
         }
-      }
-    }, true);
 
-    // 2. กดปุ่ม Enter เมื่อพิมพ์เสร็จ เพื่อยืนยันค่าและสั่งคำนวณทันที
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Enter' && e.target && e.target.tagName === 'INPUT') {
-        e.target.blur();
-      }
-    }, true);
+        setTimeout(() => {
+          const nextFocusedAttr = document.activeElement ? document.activeElement.getAttribute('oninput') : null;
+          const fn = new Function(oninputAttr);
+          fn.call(el);
+          renderAll();
 
-    // 3. เมื่อพิมพ์เสร็จแล้วคลิกออกนอกช่อง หรือกด Enter (change) ค่อยคำนวณและอัปเดตการ์ดทั้งหมด
-    document.addEventListener('change', function (e) {
-      const el = e.target;
-      if (!el || el.tagName !== 'INPUT' || el.type === 'range') return;
-
-      const oninputAttr = el.getAttribute('oninput');
-      if (!oninputAttr) return;
-
-      if (el.type === 'number') {
-        const minVal = el.min !== '' ? Number(el.min) : null;
-        const maxVal = el.max !== '' ? Number(el.max) : null;
-        let val = Number(el.value);
-        if (el.value === '' || isNaN(val)) {
-          val = minVal !== null ? minVal : 1000;
-        } else {
-          if (minVal !== null && val < minVal) val = minVal;
-          if (maxVal !== null && val > maxVal) val = maxVal;
-        }
-        el.value = val;
-      }
-
-      // จำช่องที่ผู้ใช้คลิกต่อไปไว้ (กรณีพิมพ์ชื่อเสร็จแล้วคลิกช่องแต้มต่อทันที เคอร์เซอร์จะได้ไม่หลุด)
-      setTimeout(() => {
-        const nextFocusedAttr = document.activeElement ? document.activeElement.getAttribute('oninput') : null;
-
-        const fn = new Function(oninputAttr);
-        fn.call(el);
-        renderAll();
-
-        if (nextFocusedAttr && nextFocusedAttr !== oninputAttr) {
-          const targetInput = document.querySelector(`input[oninput="${nextFocusedAttr}"]`);
-          if (targetInput) targetInput.focus();
-        }
-      }, 10);
-    }, true);
-  })();
-</script>
+          if (nextFocusedAttr && nextFocusedAttr !== oninputAttr) {
+            const targetInput = document.querySelector(`input[oninput="${nextFocusedAttr}"]`);
+            if (targetInput) targetInput.focus();
+          }
+        }, 10);
+      }, true);
+    })();
+  </script>
 
 </body>
 </html>
