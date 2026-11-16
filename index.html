@@ -2794,6 +2794,296 @@
       }, true);
     })();
   </script>
+  
+ <!-- ระบบ Cloud Real-Time Sync ผ่านลิงก์เดียว + ปลดล็อกการพิมพ์ทุกช่อง -->
+<script src="https://unpkg.com/mqtt@5.3.4/dist/mqtt.min.js"></script>
+<script>
+  (function () {
+    const CLOUD_TOPIC = 'chanchai_tech_pubg_rank_hub_2026_v1/squad_state';
+    const BROKERS = [
+      'wss://broker.emqx.io:8084/mqtt',
+      'wss://broker.hivemq.com:8884/mqtt'
+    ];
+    const CLIENT_ID = 'pubg_hub_' + Math.random().toString(36).slice(2, 10);
+    const activeClients = [];
+    let isApplyingRemote = false;
+
+    // 1. ตั้งค่าเริ่มต้นให้เป็นข้อมูลทีมจริงของคุณ (7MB-NUEA, 7MB-BENZ, 7MB-MUNGPUN, MTKhetto)
+    const TEAM_INITIAL_DATA = {
+      conqThreshold: 5313,
+      dailyResetTime: '07:00',
+      players: [
+        { ign: '7MB-NUEA',    role: 'IGL / สั่งการ',      pts: 4472, kd: 4.8, winRate: 28, cards: 2 },
+        { ign: '7MB-BENZ',    role: 'Fragger / ตัวชน',    pts: 3421, kd: 5.2, winRate: 26, cards: 1 },
+        { ign: '7MB-MUNGPUN', role: 'Sniper / แนวหลัง',   pts: 3395, kd: 4.4, winRate: 24, cards: 1 },
+        { ign: 'MTKhetto',    role: 'Support / ซัพพอร์ต', pts: 3100, kd: 3.9, winRate: 25, cards: 1 }
+      ]
+    };
+
+    function applyInitialTeamIfBlank() {
+      const hasDefaultPlaceholder = appState.players.some(p => p.ign.includes('7MB-PLAYER'));
+      if (hasDefaultPlaceholder) {
+        appState.conqThreshold = TEAM_INITIAL_DATA.conqThreshold;
+        appState.settings.dailyResetTime = TEAM_INITIAL_DATA.dailyResetTime;
+        TEAM_INITIAL_DATA.players.forEach((d, idx) => {
+          if (appState.players[idx]) {
+            appState.players[idx].ign = d.ign;
+            appState.players[idx].role = d.role;
+            appState.players[idx].modes.tpp_squad = d.pts;
+            appState.players[idx].kd = d.kd;
+            appState.players[idx].winRate = d.winRate;
+            appState.players[idx].protectionCards = d.cards;
+          }
+        });
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+      }
+    }
+
+    function setCloudStatusBadge(text, isOnline = true) {
+      const statusEl = document.getElementById('lastSavedStatus');
+      if (!statusEl) return;
+      const dotColor = isOnline ? 'bg-emerald-400' : 'bg-amber-400';
+      statusEl.innerHTML = `<span class="w-2 h-2 rounded-full ${dotColor} animate-pulse"></span><span>${text}</span>`;
+    }
+
+    // 2. ฟังก์ชันส่งข้อมูลขึ้น Cloud แบบจำค่าถาวร (Retained Cloud State)
+    function pushStateToCloud(showNotification = false) {
+      if (isApplyingRemote) return;
+
+      appState.updatedAt = Date.now();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+
+      const payload = JSON.stringify({
+        senderId: CLIENT_ID,
+        updatedAt: appState.updatedAt,
+        state: appState
+      });
+
+      let sentCount = 0;
+      activeClients.forEach(client => {
+        if (client && client.connected) {
+          client.publish(CLOUD_TOPIC, payload, { qos: 1, retain: true });
+          sentCount++;
+        }
+      });
+
+      const timeStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      if (sentCount > 0) {
+        setCloudStatusBadge(`ซิงค์ออนไลน์แล้ว (${timeStr})`, true);
+        if (showNotification) {
+          showToast('☁️ บันทึกและซิงค์ข้อมูลให้ทุกคนในลิงก์นี้เรียบร้อยแล้ว!', 'success');
+        }
+      } else {
+        setCloudStatusBadge(`บันทึกในเครื่อง (${timeStr})`, false);
+      }
+    }
+
+    // 3. เชื่อมต่อ Cloud Sync ทันทีที่เปิดหน้าเว็บ
+    function initCloudSync() {
+      // ล้างพารามิเตอร์ท้าย URL ออก เพื่อให้ลิงก์สะอาดเป็นลิงก์หลักลิงก์เดียวเสมอ
+      if (window.location.search || window.location.hash) {
+        window.history.replaceState(null, '', window.location.pathname);
+      }
+
+      if (typeof mqtt === 'undefined') {
+        setCloudStatusBadge('โหมดออฟไลน์ (โหลดไลบรารีซิงค์ไม่สำเร็จ)', false);
+        return;
+      }
+
+      setCloudStatusBadge('กำลังเชื่อมต่อซิงค์ออนไลน์...', false);
+
+      BROKERS.forEach(brokerUrl => {
+        try {
+          const client = mqtt.connect(brokerUrl, {
+            clientId: CLIENT_ID + '_' + Math.random().toString(36).slice(2, 6),
+            clean: true,
+            connectTimeout: 5000,
+            reconnectPeriod: 3000
+          });
+
+          client.on('connect', function () {
+            client.subscribe(CLOUD_TOPIC, { qos: 1 });
+            const timeStr = new Date().toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+            setCloudStatusBadge(`ออนไลน์ • ซิงค์ข้อมูลอัตโนมัติ (${timeStr})`, true);
+          });
+
+          client.on('message', function (topic, message) {
+            if (topic !== CLOUD_TOPIC) return;
+            try {
+              const data = JSON.parse(message.toString());
+              if (!data || !data.state || !Array.isArray(data.state.players)) return;
+
+              // ข้ามหากเป็นข้อความที่เพิ่งส่งออกไปจากเครื่องตัวเอง
+              if (data.senderId === CLIENT_ID) return;
+
+              const incomingTime = Number(data.updatedAt) || 0;
+              const localTime = Number(appState.updatedAt) || 0;
+
+              // ดึงข้อมูลจาก Cloud มาทับเมื่อข้อมูลบน Cloud ใหม่กว่าในเครื่อง
+              if (incomingTime >= localTime) {
+                isApplyingRemote = true;
+                const currentSelectedSlot = appState.selectedPlayerIdx || 0;
+                appState = { ...getDefaultState(), ...data.state, selectedPlayerIdx: currentSelectedSlot };
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(appState));
+
+                // อัปเดตหน้าจอทันที (ยกเว้นช่องที่กำลังพิมพ์ค้างอยู่)
+                const activeEl = document.activeElement;
+                if (!activeEl || activeEl.tagName !== 'INPUT') {
+                  renderAll();
+                } else {
+                  renderSquadSelectorBar();
+                }
+
+                const timeStr = new Date(incomingTime).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                setCloudStatusBadge(`ซิงค์ล่าสุดเมื่อ ${timeStr}`, true);
+                isApplyingRemote = false;
+              } else if (localTime > incomingTime) {
+                // ถ้าข้อมูลในเครื่องเราใหม่กว่าบนเซิร์ฟเวอร์ ให้ส่งข้อมูลเราไปอัปเดตเซิร์ฟเวอร์
+                pushStateToCloud(false);
+              }
+            } catch (err) {
+              console.error('Cloud sync parse error:', err);
+              isApplyingRemote = false;
+            }
+          });
+
+          activeClients.push(client);
+        } catch (e) {
+          console.error('Broker connection error:', e);
+        }
+      });
+    }
+
+    // 4. ผูกปุ่ม Save, ปุ่มแชร์ลิงก์ และการแก้ไขทุกจุดให้ซิงค์ขึ้น Cloud อัตโนมัติ
+    window.addEventListener('load', function () {
+      applyInitialTeamIfBlank();
+      renderAll();
+
+      // พ่วงฟังก์ชัน saveState เดิมให้ส่งข้อมูลขึ้น Cloud ทุกครั้งที่มีการแก้ไข
+      const origSaveState = window.saveState;
+      let syncTimer = null;
+      window.saveState = function (showToastMsg = false) {
+        if (typeof origSaveState === 'function') {
+          origSaveState(false);
+        }
+        if (isApplyingRemote) return;
+
+        clearTimeout(syncTimer);
+        if (showToastMsg) {
+          pushStateToCloud(true);
+        } else {
+          syncTimer = setTimeout(() => pushStateToCloud(false), 250);
+        }
+      };
+
+      window.manualSaveSquadData = function () {
+        pushStateToCloud(true);
+      };
+
+      // ปุ่มคัดลอกลิงก์แชร์ทีม จะซิงค์ข้อมูลขึ้น Cloud ทันที และคัดลอกลิงก์หลักสั้นๆ เพียงลิงก์เดียว
+      window.copyShareableSquadLink = function () {
+        pushStateToCloud(false);
+        const cleanUrl = window.location.origin + window.location.pathname;
+        copyTextToClipboard(
+          cleanUrl,
+          '🔗 ซิงค์ข้อมูลขึ้นระบบแล้ว! ส่งลิงก์หลักนี้ให้เพื่อนเปิดดูได้เลย'
+        );
+      };
+
+      initCloudSync();
+    });
+
+    // 5. ปลดล็อกให้คลิกพิมพ์และลบตัวเลข/ชื่อได้ทุกช่องโดยเคอร์เซอร์ไม่หลุด
+    document.addEventListener('input', function (e) {
+      const el = e.target;
+      if (!el || el.tagName !== 'INPUT' || el.type === 'range') return;
+
+      const oninputAttr = el.getAttribute('oninput') || '';
+      if (!oninputAttr) return;
+
+      if (el.type === 'number') {
+        e.stopImmediatePropagation();
+        const val = Number(el.value);
+        const minVal = el.min !== '' ? Number(el.min) : 0;
+        const maxVal = el.max !== '' ? Number(el.max) : 99999;
+
+        if (el.value !== '' && !isNaN(val) && val >= minVal && val <= maxVal) {
+          const mPts = oninputAttr.match(/quickUpdatePlayerPts\((\d+)/);
+          if (mPts) {
+            const idx = Number(mPts[1]);
+            appState.players[idx].modes.tpp_squad = Math.floor(val);
+            window.saveState(false);
+            renderSquadSelectorBar();
+          } else if (oninputAttr.includes('handleActivePlayerPointsInput')) {
+            const p = getActivePlayer();
+            p.modes[p.activeMode] = Math.floor(val);
+            const slider = document.getElementById('currentPointsSlider');
+            if (slider) slider.value = Math.min(8000, Math.floor(val));
+            window.saveState(false);
+            renderSquadSelectorBar();
+          } else if (oninputAttr.includes('handleGlobalConqChange')) {
+            appState.conqThreshold = Math.floor(val);
+            window.saveState(false);
+          }
+        }
+        return;
+      }
+
+      if (oninputAttr.includes('quickUpdatePlayerName')) {
+        e.stopImmediatePropagation();
+        const mName = oninputAttr.match(/quickUpdatePlayerName\((\d+)/);
+        if (mName) {
+          const idx = Number(mName[1]);
+          if (el.value.trim() !== '') {
+            appState.players[idx].ign = el.value.trim();
+            window.saveState(false);
+            renderSquadSelectorBar();
+          }
+        }
+      }
+    }, true);
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Enter' && e.target && e.target.tagName === 'INPUT') {
+        e.target.blur();
+      }
+    }, true);
+
+    document.addEventListener('change', function (e) {
+      const el = e.target;
+      if (!el || el.tagName !== 'INPUT' || el.type === 'range') return;
+
+      const oninputAttr = el.getAttribute('oninput');
+      if (!oninputAttr) return;
+
+      if (el.type === 'number') {
+        const minVal = el.min !== '' ? Number(el.min) : null;
+        const maxVal = el.max !== '' ? Number(el.max) : null;
+        let val = Number(el.value);
+        if (el.value === '' || isNaN(val)) {
+          val = minVal !== null ? minVal : 1000;
+        } else {
+          if (minVal !== null && val < minVal) val = minVal;
+          if (maxVal !== null && val > maxVal) val = maxVal;
+        }
+        el.value = val;
+      }
+
+      setTimeout(() => {
+        const nextFocusedAttr = document.activeElement ? document.activeElement.getAttribute('oninput') : null;
+        const fn = new Function(oninputAttr);
+        fn.call(el);
+        renderAll();
+        pushStateToCloud(false);
+
+        if (nextFocusedAttr && nextFocusedAttr !== oninputAttr) {
+          const targetInput = document.querySelector(`input[oninput="${nextFocusedAttr}"]`);
+          if (targetInput) targetInput.focus();
+        }
+      }, 10);
+    }, true);
+  })();
+</script>
 
 </body>
 </html>
